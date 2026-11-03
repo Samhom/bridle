@@ -48,6 +48,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     final C client;
     final LifecycleCoordinator.Owned<C> ownership;
     int references;
+    long retiredAt;
     boolean retired;
     boolean closing;
     boolean disposed;
@@ -136,6 +137,19 @@ public final class ManagedClient<C, S> implements AutoCloseable {
           attemptedRevision,
           rejectedUpdates,
           ownedResources);
+    }
+  }
+
+  public RuntimeMetrics metrics() {
+    synchronized (state) {
+      return new RuntimeMetrics(
+          inFlight,
+          callExecutor.getQueue().size(),
+          callExecutor.getActiveCount(),
+          callExecutor.getQueue().size() + callExecutor.getQueue().remainingCapacity(),
+          cleanupFailures,
+          rejectedUpdates,
+          retiring == null ? 0 : Math.max(0, System.nanoTime() - retiring.retiredAt));
     }
   }
 
@@ -306,6 +320,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
           active = candidate;
           old.retired = true;
           retiring = old;
+          old.retiredAt = System.nanoTime();
           if (old.references == 0) scheduleDisposal(old);
           configuration.finish(attempt, snapshot.revision(), null);
           return UpdateResult.APPLIED;
@@ -384,6 +399,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
           active = candidate;
           previous.retired = true;
           retiring = previous;
+          previous.retiredAt = System.nanoTime();
           if (previous.references == 0) scheduleDisposal(previous);
           return true;
         }
@@ -610,6 +626,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     final Object dispatch = new Object();
     final Runnable task = this::run;
     ScheduledFuture<?> deadline;
+    long queueNanos;
     boolean started, terminal;
 
     Invocation(
@@ -653,6 +670,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
 
     void observe(Observation.Outcome outcome, long elapsed) {
       try {
+        observation.queued(queueNanos);
         observation.finish(outcome, elapsed);
       } catch (RuntimeException | LinkageError ignored) {
       }
@@ -772,6 +790,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
           synchronized (state) {
             ensureOpen();
           }
+          queueNanos = Math.max(0, System.nanoTime() - start);
           started = true;
         }
         CompletionStage<T> nativeResult;

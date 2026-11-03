@@ -30,6 +30,15 @@ public final class CompositeObserver implements Observer {
       }
 
       @Override
+      public void queued(long nanos) {
+        for (Observation item : observations)
+          try {
+            item.queued(nanos);
+          } catch (RuntimeException | LinkageError ignored) {
+          }
+      }
+
+      @Override
       public AutoCloseable openScope() {
         List<AutoCloseable> scopes = new ArrayList<>();
         for (Observation item : observations)

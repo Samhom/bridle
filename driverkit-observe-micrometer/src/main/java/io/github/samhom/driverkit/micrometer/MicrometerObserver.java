@@ -63,14 +63,29 @@ public final class MicrometerObserver implements Observer {
                 "operation",
                 "overflow");
     AtomicBoolean finished = new AtomicBoolean();
-    return (outcome, elapsed) -> {
-      if (!finished.compareAndSet(false, true)) return;
-      Tags result = tags.and("outcome", outcome.name().toLowerCase(java.util.Locale.ROOT));
-      registry.counter("driverkit.client.operations", result).increment();
-      Timer.builder("driverkit.client.operation.duration")
-          .tags(result)
-          .register(registry)
-          .record(Math.max(0, elapsed), TimeUnit.NANOSECONDS);
+    return new Observation() {
+      private long queueNanos;
+
+      @Override
+      public void queued(long nanos) {
+        queueNanos = Math.max(0, nanos);
+      }
+
+      @Override
+      public void finish(Outcome outcome, long elapsed) {
+        if (!finished.compareAndSet(false, true)) return;
+        if (queueNanos > 0)
+          Timer.builder("driverkit.client.queue.wait")
+              .tags(tags)
+              .register(registry)
+              .record(queueNanos, TimeUnit.NANOSECONDS);
+        Tags result = tags.and("outcome", outcome.name().toLowerCase(java.util.Locale.ROOT));
+        registry.counter("driverkit.client.operations", result).increment();
+        Timer.builder("driverkit.client.operation.duration")
+            .tags(result)
+            .register(registry)
+            .record(Math.max(0, elapsed), TimeUnit.NANOSECONDS);
+      }
     };
   }
 }

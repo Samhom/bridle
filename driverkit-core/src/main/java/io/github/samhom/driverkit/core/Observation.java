@@ -3,6 +3,8 @@ package io.github.samhom.driverkit.core;
 public interface Observation {
   void finish(Outcome outcome, long elapsedNanos);
 
+  default void queued(long nanos) {}
+
   default AutoCloseable openScope() {
     return () -> {};
   }
