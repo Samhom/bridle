@@ -21,6 +21,30 @@ class ElasticsearchTransportTest {
   private static final ResourceId RESOURCE = new ResourceId("example", "test", "search");
 
   @Test
+  void pointInTimePinsGenerationAndClosesServerContext() throws Exception {
+    try (SearchServer server = new SearchServer();
+        ClientRuntime runtime = new ClientRuntime()) {
+      ElasticsearchSettings settings = server.settings();
+      var handle =
+          runtime.register(
+              new ConfigSnapshot<>(RESOURCE, 1, settings),
+              new ElasticsearchAdapter(),
+              ClientPolicy.defaults());
+      ManagedSearch search = new ManagedSearch(handle, settings);
+      try (var pit = search.openPointInTime("catalog", Duration.ofSeconds(30))) {
+        assertEquals(
+            UpdateResult.APPLIED, handle.reload(new ConfigSnapshot<>(RESOURCE, 2, settings)));
+        assertEquals(1, handle.status().retiringGenerations());
+        var request =
+            co.elastic.clients.elasticsearch.core.SearchRequest.of(
+                r -> r.size(10).sort(o -> o.field(f -> f.field("_shard_doc"))));
+        assertEquals(0, pit.page(request, JsonData.class).hits().hits().size());
+      }
+      assertEquals(1, server.pitCloses.get());
+    }
+  }
+
+  @Test
   void authenticatesAndMapsDocumentOperations() throws Exception {
     try (SearchServer server = new SearchServer();
         ClientRuntime runtime = new ClientRuntime()) {
@@ -85,6 +109,8 @@ class ElasticsearchTransportTest {
       ClientException error = assertThrows(ClientException.class, () -> search.bulk(request));
       assertInstanceOf(ManagedSearch.PartialBulkFailure.class, error.getCause());
       assertEquals(1, server.bulks.get());
+      assertTrue(search.bulkReportAsync(request).get(3, TimeUnit.SECONDS).errors());
+      assertEquals(2, server.bulks.get());
       BulkRequest oversized =
           BulkRequest.of(
               builder ->
@@ -97,7 +123,7 @@ class ElasticsearchTransportTest {
                                       .id("a")
                                       .document(Map.of("value", "x".repeat(2048))))));
       assertThrows(ClientException.class, () -> search.bulk(oversized));
-      assertEquals(1, server.bulks.get());
+      assertEquals(2, server.bulks.get());
     }
   }
 
@@ -221,6 +247,7 @@ class ElasticsearchTransportTest {
   }
 
   private static final class SearchServer implements AutoCloseable {
+    final AtomicInteger pitCloses = new AtomicInteger();
     final CountDownLatch slowEntered = new CountDownLatch(1), slowRelease = new CountDownLatch(1);
     final String password = UUID.randomUUID().toString();
     final String authorization =
@@ -298,6 +325,15 @@ class ElasticsearchTransportTest {
           status = 429;
           body =
               "{\"error\":{\"type\":\"es_rejected_execution_exception\",\"reason\":\"rate limited\"},\"status\":429}";
+        } else if (path.endsWith("/_pit") && exchange.getRequestMethod().equals("POST")) {
+          body =
+              "{\"id\":\"fixture-pit\",\"_shards\":{\"total\":1,\"successful\":1,\"skipped\":0,\"failed\":0}}";
+        } else if (path.equals("/_pit")) {
+          pitCloses.incrementAndGet();
+          body = "{\"succeeded\":true,\"num_freed\":1}";
+        } else if (path.equals("/_search")) {
+          body =
+              "{\"took\":1,\"timed_out\":false,\"_shards\":{\"total\":1,\"successful\":1,\"skipped\":0,\"failed\":0},\"hits\":{\"hits\":[]},\"pit_id\":\"fixture-pit-next\"}";
         } else if (path.equals("/_bulk")) {
           bulks.incrementAndGet();
           body =

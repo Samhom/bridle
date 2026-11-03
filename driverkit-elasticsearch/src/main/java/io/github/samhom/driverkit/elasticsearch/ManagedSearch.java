@@ -159,9 +159,119 @@ public final class ManagedSearch {
   private <T> AsyncCall<ElasticsearchClient, SearchResponse<T>> searchCall(
       SearchRequest request, Class<T> type) {
     if (request == null
+        || request.searchAfter().size() > 32
+        || request.sort().size() > 32
         || (request.size() != null && (request.size() < 0 || request.size() > 10000)))
       throw new IllegalArgumentException("Search size out of bounds");
     return (nativeClient, context) -> async(nativeClient, context).search(request, type);
+  }
+
+  /**
+   * Inspect every item without throwing away successful item metadata. Writes are never replayed.
+   */
+  public CompletableFuture<BulkResponse> bulkReportAsync(BulkRequest request) {
+    return bulkAsync(request)
+        .handle(
+            (response, error) -> {
+              Throwable cause = error;
+              while (cause instanceof java.util.concurrent.CompletionException
+                  && cause.getCause() != null) cause = cause.getCause();
+              if (cause instanceof ClientException
+                  && cause.getCause() instanceof PartialBulkFailure) cause = cause.getCause();
+              if (cause instanceof PartialBulkFailure failure) return failure.response();
+              if (cause != null) throw new java.util.concurrent.CompletionException(cause);
+              return response;
+            });
+  }
+
+  /**
+   * Pins the native transport generation. Server expiry bounds cleanup if the client is revoked.
+   */
+  public PointInTime openPointInTime(String index, Duration keepAlive) {
+    index(index);
+    Limits.timeout(keepAlive);
+    if (keepAlive.compareTo(Duration.ofMinutes(1)) > 0)
+      throw new IllegalArgumentException("PIT keep-alive exceeds one minute");
+    ClientSession<ElasticsearchClient> lease = client.session();
+    try {
+      String id =
+          client.executeAwait(
+              Operation.read("pit.open", timeout),
+              (ignored, context) ->
+                  async(lease.client(), context)
+                      .openPointInTime(
+                          r -> r.index(index).keepAlive(t -> t.time(keepAlive.toMillis() + "ms")))
+                      .thenApply(OpenPointInTimeResponse::id));
+      return new PointInTime(lease, id, keepAlive);
+    } catch (RuntimeException | Error failure) {
+      lease.close();
+      throw failure;
+    }
+  }
+
+  public final class PointInTime implements AutoCloseable {
+    private final ClientSession<ElasticsearchClient> lease;
+    private final Duration keepAlive;
+    private String id;
+    private boolean closed;
+
+    private PointInTime(ClientSession<ElasticsearchClient> lease, String id, Duration keepAlive) {
+      this.lease = lease;
+      this.id = id;
+      this.keepAlive = keepAlive;
+    }
+
+    /**
+     * Serialized pages prevent concurrent PIT-ID replacement. Use returned hit sort values as
+     * search_after.
+     */
+    public synchronized <T> SearchResponse<T> page(SearchRequest request, Class<T> type) {
+      if (closed) throw new IllegalStateException("PIT is closed");
+      if (request == null
+          || !request.index().isEmpty()
+          || request.pit() != null
+          || request.scroll() != null
+          || (request.from() != null && request.from() != 0)
+          || request.size() == null
+          || request.size() < 1
+          || request.size() > 1000
+          || request.searchAfter().size() > 32
+          || request.sort().isEmpty()
+          || request.sort().size() > 32)
+        throw new IllegalArgumentException(
+            "PIT page requires bounded size, sort, and no index or PIT override");
+      SearchRequest.Builder builder =
+          new SearchRequest.Builder()
+              .withJson(
+                  new java.io.StringReader(
+                      co.elastic.clients.json.JsonpUtils.toJsonString(
+                          request, lease.client()._jsonpMapper())));
+      builder
+          .query(request.query())
+          .size(request.size())
+          .sort(request.sort())
+          .searchAfter(request.searchAfter())
+          .pit(p -> p.id(id).keepAlive(t -> t.time(keepAlive.toMillis() + "ms")));
+      SearchResponse<T> response =
+          client.executeAwait(
+              Operation.read("pit.page", timeout),
+              (ignored, context) -> async(lease.client(), context).search(builder.build(), type));
+      if (response.pitId() != null) id = response.pitId();
+      return response;
+    }
+
+    @Override
+    public synchronized void close() {
+      if (closed) return;
+      closed = true;
+      try {
+        client.executeAwait(
+            Operation.read("pit.close", timeout),
+            (ignored, context) -> async(lease.client(), context).closePointInTime(r -> r.id(id)));
+      } finally {
+        lease.close();
+      }
+    }
   }
 
   private static ElasticsearchAsyncClient async(ElasticsearchClient client, CallContext context) {
