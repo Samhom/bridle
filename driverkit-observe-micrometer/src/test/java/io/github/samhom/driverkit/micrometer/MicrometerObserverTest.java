@@ -11,6 +11,31 @@ class MicrometerObserverTest {
   private static final ResourceId RESOURCE = new ResourceId("example", "test", "cache");
 
   @Test
+  void runtimeGaugesAreExplicitlyReleasedAndQueueTimingIsRecorded() {
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
+    try (ClientRuntime runtime = new ClientRuntime()) {
+      var client =
+          runtime.register(
+              new ConfigSnapshot<>(RESOURCE, 1, "fixture"),
+              new FactoryAdapter<String, String>("fixture", s -> s, (c, t) -> {}, c -> {}),
+              ClientPolicy.defaults());
+      try (ResourceMeters meters = new ResourceMeters(registry, client)) {
+        assertEquals(0, registry.get("driverkit.resource.inflight").gauge().value());
+        assertThrows(IllegalArgumentException.class, () -> new ResourceMeters(registry, client));
+      }
+      assertTrue(registry.getMeters().isEmpty());
+      Observation observation =
+          new MicrometerObserver(registry)
+              .start(RESOURCE, "fixture", Operation.read("get", Duration.ofSeconds(1)), 1);
+      observation.queued(1000);
+      observation.finish(Observation.Outcome.SUCCESS, 2000);
+      assertEquals(1, registry.get("driverkit.client.queue.wait").timer().count());
+    } finally {
+      registry.close();
+    }
+  }
+
+  @Test
   void recordsOneLogicalResultWithoutChangingInjectedRegistry() {
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
     try {
