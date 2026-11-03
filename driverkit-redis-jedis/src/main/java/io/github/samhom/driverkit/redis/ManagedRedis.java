@@ -67,6 +67,80 @@ public final class ManagedRedis {
             RedisCallBudget.execute(nativeClient, context, jedis -> jedis.del(key)));
   }
 
+  /** Bounded single-connection batch; responses preserve input order. */
+  public java.util.List<String> getAll(java.util.List<String> keys) {
+    java.util.List<String> copy = java.util.List.copyOf(keys);
+    Limits.count(copy.size(), 1000);
+    copy.forEach(ManagedRedis::key);
+    return client.execute(
+        Operation.read("mget", timeout),
+        (nativeClient, context) ->
+            RedisCallBudget.execute(
+                nativeClient, context, jedis -> jedis.mget(copy.toArray(String[]::new))));
+  }
+
+  /** Trusted, deployment-owned script only. No automatic replay of potentially mutating scripts. */
+  public Object eval(String script, java.util.List<String> keys, java.util.List<String> arguments) {
+    Limits.bytes(script == null ? null : script.getBytes(StandardCharsets.UTF_8), 65536);
+    java.util.List<String> keyCopy = java.util.List.copyOf(keys),
+        args = java.util.List.copyOf(arguments);
+    Limits.count(keyCopy.size(), 1000);
+    Limits.count(Math.max(1, args.size()), 1000);
+    keyCopy.forEach(ManagedRedis::key);
+    long total = 0;
+    for (String arg : args) total += arg.getBytes(StandardCharsets.UTF_8).length;
+    if (total > maxValueBytes)
+      throw new IllegalArgumentException("Script argument budget exceeded");
+    final long bytes = total;
+    return client.execute(
+        Operation.write("eval", timeout),
+        (nativeClient, context) -> {
+          if (bytes > context.settings(RedisSettings.class).maxValueBytes())
+            throw new IllegalArgumentException("Script argument budget exceeded");
+          return RedisCallBudget.execute(
+              nativeClient, context, jedis -> jedis.eval(script, keyCopy, args));
+        });
+  }
+
+  /** Fixed command batch avoids exposing an unbounded pipeline callback. */
+  public java.util.List<Object> setBatch(
+      java.util.Map<String, String> values, boolean transaction) {
+    java.util.Map<String, String> copy = java.util.Map.copyOf(values);
+    Limits.count(copy.size(), 1000);
+    long bytes = 0;
+    for (var entry : copy.entrySet()) {
+      key(entry.getKey());
+      byte[] value = entry.getValue().getBytes(StandardCharsets.UTF_8);
+      Limits.bytes(value, maxValueBytes);
+      bytes += value.length;
+    }
+    if (bytes > 16 * 1024 * 1024) throw new IllegalArgumentException("Batch byte budget exceeded");
+    return client.execute(
+        Operation.write(transaction ? "transaction.set" : "pipeline.set", timeout),
+        (nativeClient, context) ->
+            RedisCallBudget.execute(
+                nativeClient,
+                context,
+                jedis -> {
+                  for (String value : copy.values())
+                    Limits.bytes(
+                        value.getBytes(StandardCharsets.UTF_8),
+                        Math.min(
+                            maxValueBytes, context.settings(RedisSettings.class).maxValueBytes()));
+                  context.checkDeadline();
+                  if (transaction) {
+                    try (redis.clients.jedis.Transaction tx = jedis.multi()) {
+                      copy.forEach(tx::set);
+                      return tx.exec();
+                    }
+                  }
+                  try (redis.clients.jedis.Pipeline pipeline = jedis.pipelined()) {
+                    copy.forEach(pipeline::set);
+                    return pipeline.syncAndReturnAll();
+                  }
+                }));
+  }
+
   public ManagedClient<RedisClient, RedisSettings> handle() {
     return client;
   }
