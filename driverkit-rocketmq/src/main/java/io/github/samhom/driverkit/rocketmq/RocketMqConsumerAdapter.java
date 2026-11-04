@@ -10,9 +10,39 @@ import org.apache.rocketmq.client.consumer.listener.*;
 public final class RocketMqConsumerAdapter
     implements ConsumerAdapter<DefaultMQPushConsumer, RocketMqSettings> {
   private final MessageListenerConcurrently handler;
+  private final MessageListenerOrderly ordered;
+  private final ConsumerOptions options;
+  private final org.apache.rocketmq.client.consumer.MessageQueueListener rebalance;
 
   public RocketMqConsumerAdapter(MessageListenerConcurrently handler) {
+    this(handler, ConsumerOptions.defaults(), null);
+  }
+
+  public RocketMqConsumerAdapter(
+      MessageListenerConcurrently handler,
+      ConsumerOptions options,
+      org.apache.rocketmq.client.consumer.MessageQueueListener rebalance) {
     this.handler = Objects.requireNonNull(handler);
+    this.ordered = null;
+    this.options = Objects.requireNonNull(options);
+    this.rebalance = rebalance;
+  }
+
+  private RocketMqConsumerAdapter(
+      MessageListenerOrderly handler,
+      ConsumerOptions options,
+      org.apache.rocketmq.client.consumer.MessageQueueListener rebalance) {
+    this.handler = null;
+    this.ordered = Objects.requireNonNull(handler);
+    this.options = Objects.requireNonNull(options);
+    this.rebalance = rebalance;
+  }
+
+  public static RocketMqConsumerAdapter ordered(
+      MessageListenerOrderly handler,
+      ConsumerOptions options,
+      org.apache.rocketmq.client.consumer.MessageQueueListener rebalance) {
+    return new RocketMqConsumerAdapter(handler, options, rebalance);
   }
 
   @Override
@@ -33,6 +63,18 @@ public final class RocketMqConsumerAdapter
   @Override
   public DefaultMQPushConsumer start(RocketMqSettings settings, DeliveryGuard guard)
       throws Exception {
+    DefaultMQPushConsumer consumer = createConsumer(settings, guard);
+    try {
+      consumer.start();
+      return consumer;
+    } catch (Exception failure) {
+      consumer.shutdown();
+      throw failure;
+    }
+  }
+
+  DefaultMQPushConsumer createConsumer(RocketMqSettings settings, DeliveryGuard guard)
+      throws Exception {
     validate(settings);
     DefaultMQPushConsumer consumer =
         new DefaultMQPushConsumer(
@@ -47,29 +89,49 @@ public final class RocketMqConsumerAdapter
     consumer.setPullBatchSize(16);
     consumer.setPullThresholdForQueue(256);
     consumer.setPullThresholdSizeForQueue(16);
-    consumer.setMaxReconsumeTimes(16);
+    consumer.setMaxReconsumeTimes(options.maxReconsumeTimes());
+    consumer.setConsumeFromWhere(options.firstStart());
+    if (rebalance != null)
+      consumer.setMessageQueueListener(
+          (topic, all, assigned) -> {
+            try {
+              rebalance.messageQueueChanged(
+                  topic, java.util.Set.copyOf(all), java.util.Set.copyOf(assigned));
+            } catch (RuntimeException ignored) {
+              /* observational callback must not stop native rebalancing */
+            }
+          });
     consumer.setAwaitTerminationMillisWhenShutdown(settings.requestTimeout().toMillis());
     consumer.subscribe(settings.topic(), "*");
-    consumer.registerMessageListener(
-        (MessageListenerConcurrently)
-            (messages, context) ->
-                guard.invoke(
-                    () -> {
-                      for (org.apache.rocketmq.common.message.MessageExt message : messages) {
-                        if (!settings.topic().equals(message.getTopic()))
-                          return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-                        Limits.bytes(message.getBody(), settings.maxMessageBytes());
-                      }
-                      return Objects.requireNonNull(handler.consumeMessage(messages, context));
-                    },
-                    ConsumeConcurrentlyStatus.RECONSUME_LATER));
-    try {
-      consumer.start();
-      return consumer;
-    } catch (Exception e) {
-      consumer.shutdown();
-      throw e;
-    }
+    if (ordered == null)
+      consumer.registerMessageListener(
+          (MessageListenerConcurrently)
+              (messages, context) ->
+                  guard.invoke(
+                      () -> {
+                        for (org.apache.rocketmq.common.message.MessageExt message : messages) {
+                          if (!settings.topic().equals(message.getTopic()))
+                            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                          Limits.bytes(message.getBody(), settings.maxMessageBytes());
+                        }
+                        return Objects.requireNonNull(handler.consumeMessage(messages, context));
+                      },
+                      ConsumeConcurrentlyStatus.RECONSUME_LATER));
+    else
+      consumer.registerMessageListener(
+          (MessageListenerOrderly)
+              (messages, context) ->
+                  guard.invoke(
+                      () -> {
+                        for (var message : messages) {
+                          if (!settings.topic().equals(message.getTopic()))
+                            return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                          Limits.bytes(message.getBody(), settings.maxMessageBytes());
+                        }
+                        return Objects.requireNonNull(ordered.consumeMessage(messages, context));
+                      },
+                      ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT));
+    return consumer;
   }
 
   @Override

@@ -7,6 +7,18 @@ import org.apache.rocketmq.client.producer.DefaultMQProducer;
 
 public final class RocketMqProducerAdapter
     implements DriverAdapter<DefaultMQProducer, RocketMqSettings> {
+  private final org.apache.rocketmq.client.producer.TransactionListener transactions;
+
+  public RocketMqProducerAdapter() {
+    this.transactions = null;
+  }
+
+  /** Listener must persist decisions by business key so broker checks survive process restarts. */
+  public RocketMqProducerAdapter(
+      org.apache.rocketmq.client.producer.TransactionListener transactions) {
+    this.transactions = java.util.Objects.requireNonNull(transactions);
+  }
+
   @Override
   public String id() {
     return "rocketmq-remoting5";
@@ -30,9 +42,21 @@ public final class RocketMqProducerAdapter
   @Override
   public DefaultMQProducer create(RocketMqSettings settings) {
     validate(settings);
-    DefaultMQProducer producer =
-        new DefaultMQProducer(
-            settings.group(), RemotingAuthentication.hook(settings.credentials()));
+    DefaultMQProducer producer;
+    if (transactions == null)
+      producer =
+          new DefaultMQProducer(
+              settings.group(), RemotingAuthentication.hook(settings.credentials()));
+    else {
+      var transactional =
+          new org.apache.rocketmq.client.producer.TransactionMQProducer(
+              settings.group(), RemotingAuthentication.hook(settings.credentials()));
+      transactional.setTransactionListener(transactions);
+      transactional.setCheckThreadPoolMinSize(1);
+      transactional.setCheckThreadPoolMaxSize(2);
+      transactional.setCheckRequestHoldMax(256);
+      producer = transactional;
+    }
     producer.setNamesrvAddr(settings.nameServer().authority());
     producer.setUseTLS(settings.nameServer().tls());
     producer.setInstanceName("driverkit-" + UUID.randomUUID());

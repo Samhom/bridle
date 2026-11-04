@@ -17,10 +17,15 @@ public record RocketMqSettings(
     Objects.requireNonNull(nameServer);
     Objects.requireNonNull(credentials);
     Limits.name(group);
-    Limits.name(topic);
+    if (topic != null && topic.startsWith("%DLQ%")) Limits.name(topic.substring(5));
+    else Limits.name(topic);
     Limits.timeout(requestTimeout);
     Limits.count(consumerThreads, 256);
     Limits.count(maxMessageBytes, 4 * 1024 * 1024);
+  }
+
+  public static String deadLetterTopic(String sourceGroup) {
+    return "%DLQ%" + Limits.name(sourceGroup);
   }
 
   public static RocketMqSettings defaults(
