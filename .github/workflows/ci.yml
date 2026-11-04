@@ -68,8 +68,15 @@ jobs:
           python3 tools/api_compatibility.py --jar "driverkit-core/target/driverkit-core-$sdk_version.jar" --baseline api/core-development.json
           python3 -m unittest discover -s tools -p 'test_api_compatibility.py'
           python3 -m unittest discover -s tools -p 'test_release_bundle.py'
+          python3 -m unittest discover -s tools -p 'test_verify_artifacts.py'
+          python3 -m unittest discover -s tools -p 'test_workflow_contract.py'
       - name: Formatting
         run: mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2-cache" com.spotify.fmt:fmt-maven-plugin:2.25:check
+      - name: Verify standalone installed-JAR consumers
+        if: matrix.java == '17'
+        run: |
+          mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2-cache" -DskipTests install
+          python3 tools/verify_artifacts.py --offline
       - name: Resolve audit inventory
         if: matrix.java == '17'
         run: mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2-cache" org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree -DoutputType=json -DoutputFile=target/dependencies.json
