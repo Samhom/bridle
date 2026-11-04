@@ -184,49 +184,137 @@ public final class ManagedSearch {
             });
   }
 
-  /**
-   * Pins the native transport generation. Server expiry bounds cleanup if the client is revoked.
-   */
+  /** Pins transport, settings and observation revision as one owned generation. */
   public PointInTime openPointInTime(String index, Duration keepAlive) {
     index(index);
     Limits.timeout(keepAlive);
     if (keepAlive.compareTo(Duration.ofMinutes(1)) > 0)
       throw new IllegalArgumentException("PIT keep-alive exceeds one minute");
-    ClientSession<ElasticsearchClient> lease = client.session();
+    ClientSession<ElasticsearchClient> lease=client.session();
+    PitOwnership ownership;
+    try {ownership=new PitOwnership(lease,keepAlive);}
+    catch(RuntimeException|Error failure){lease.close();throw failure;}
     try {
-      String id =
-          client.executeAwait(
-              Operation.read("pit.open", timeout),
-              (ignored, context) ->
-                  async(lease.client(), context)
-                      .openPointInTime(
-                          r -> r.index(index).keepAlive(t -> t.time(keepAlive.toMillis() + "ms")))
-                      .thenApply(OpenPointInTimeResponse::id));
-      return new PointInTime(lease, id, keepAlive);
+      client.executeAwait(
+          ownership.lease,
+          Operation.read("pit.open", timeout),
+          (nativeClient, context) ->
+              ownership.track(
+                  () ->
+                      async(nativeClient, context)
+                          .openPointInTime(
+                              r ->
+                                  r.index(index)
+                                      .keepAlive(t -> t.time(keepAlive.toMillis() + "ms"))),
+                  OpenPointInTimeResponse::id));
+      return new PointInTime(ownership);
     } catch (RuntimeException | Error failure) {
-      lease.close();
+      ownership.closeWhenIdle();
       throw failure;
     }
   }
 
-  public final class PointInTime implements AutoCloseable {
-    private final ClientSession<ElasticsearchClient> lease;
-    private final Duration keepAlive;
+  /** Owns the persistent lease until both native work and any late-ID cleanup complete. */
+  private final class PitOwnership {
+    final ClientSession<ElasticsearchClient> lease;
+    final ElasticsearchClient nativeClient;
+    final ElasticsearchSettings settings;
+    final Duration keepAlive;
+    final CompletableFuture<Void> cleanup = new CompletableFuture<>();
+    private int nativeCalls;
     private String id;
-    private boolean closed;
+    private boolean closing, cleanupStarted;
 
-    private PointInTime(ClientSession<ElasticsearchClient> lease, String id, Duration keepAlive) {
+    PitOwnership(ClientSession<ElasticsearchClient> lease, Duration keepAlive) {
       this.lease = lease;
-      this.id = id;
       this.keepAlive = keepAlive;
+      nativeClient = lease.client();
+      settings = lease.settings(ElasticsearchSettings.class);
+    }
+
+    synchronized String id() {
+      if (closing) throw new IllegalStateException("PIT is closed");
+      return id;
+    }
+
+    <T> java.util.concurrent.CompletionStage<T> track(
+        java.util.function.Supplier<? extends java.util.concurrent.CompletionStage<T>> request,
+        java.util.function.Function<T, String> nextId) {
+      synchronized (this) {
+        if (closing) throw new IllegalStateException("PIT is closed");
+        nativeCalls++;
+      }
+      try {
+        return java.util.Objects.requireNonNull(request.get())
+            .whenComplete(
+                (response, error) -> {
+                  synchronized (PitOwnership.this) {
+                    if (response != null) {
+                      String updated = nextId.apply(response);
+                      if (updated != null) id = updated;
+                    }
+                    nativeCalls--;
+                  }
+                  cleanIfIdle();
+                });
+      } catch (RuntimeException | Error failure) {
+        synchronized (this) {
+          nativeCalls--;
+        }
+        cleanIfIdle();
+        throw failure;
+      }
+    }
+
+    void closeWhenIdle() {
+      synchronized (this) {
+        closing = true;
+      }
+      cleanIfIdle();
+    }
+
+    private void cleanIfIdle() {
+      String toClose;
+      synchronized (this) {
+        if (!closing || nativeCalls != 0 || cleanupStarted) return;
+        cleanupStarted = true;
+        toClose = id;
+      }
+      if (toClose == null) {
+        finishCleanup(null);
+        return;
+      }
+      // Cleanup is resource disposal, not a newly admitted application call. It uses the original
+      // transport/settings, including after logical timeout or revocation, while this lease owns
+      // it.
+      try {
+        async(nativeClient, settings, timeout)
+            .closePointInTime(r -> r.id(toClose))
+            .whenComplete((ignored, error) -> finishCleanup(error));
+      } catch (RuntimeException | Error failure) {
+        finishCleanup(failure);
+      }
+    }
+
+    private void finishCleanup(Throwable error) {
+      lease.close();
+      if (error == null) cleanup.complete(null);
+      else cleanup.completeExceptionally(error);
+    }
+  }
+
+  public final class PointInTime implements AutoCloseable {
+    private final PitOwnership ownership;
+
+    private PointInTime(PitOwnership ownership) {
+      this.ownership = ownership;
     }
 
     /**
-     * Serialized pages prevent concurrent PIT-ID replacement. Use returned hit sort values as
-     * search_after.
+     * Serialized logical pages; a failed/timed-out page closes this session, including late IDs.
      */
     public synchronized <T> SearchResponse<T> page(SearchRequest request, Class<T> type) {
-      if (closed) throw new IllegalStateException("PIT is closed");
+      String id = ownership.id();
       if (request == null
           || !request.index().isEmpty()
           || request.pit() != null
@@ -245,38 +333,62 @@ public final class ManagedSearch {
               .withJson(
                   new java.io.StringReader(
                       co.elastic.clients.json.JsonpUtils.toJsonString(
-                          request, lease.client()._jsonpMapper())));
-      builder
-          .query(request.query())
-          .size(request.size())
-          .sort(request.sort())
-          .searchAfter(request.searchAfter())
-          .pit(p -> p.id(id).keepAlive(t -> t.time(keepAlive.toMillis() + "ms")));
-      SearchResponse<T> response =
-          client.executeAwait(
-              Operation.read("pit.page", timeout),
-              (ignored, context) -> async(lease.client(), context).search(builder.build(), type));
-      if (response.pitId() != null) id = response.pitId();
-      return response;
+                          request, ownership.nativeClient._jsonpMapper())));
+      // withJson already copies arrays; adding sort/search_after again would duplicate them.
+      builder.pit(p -> p.id(id).keepAlive(t -> t.time(ownership.keepAlive.toMillis() + "ms")));
+      SearchRequest page = builder.build();
+      try {
+        return client.executeAwait(
+            ownership.lease,
+            Operation.read("pit.page", timeout),
+            (nativeClient, context) ->
+                ownership.track(
+                    () -> async(nativeClient, context).search(page, type), SearchResponse::pitId));
+      } catch (RuntimeException | Error failure) {
+        ownership.closeWhenIdle();
+        throw failure;
+      }
     }
 
     @Override
     public synchronized void close() {
-      if (closed) return;
-      closed = true;
+      ownership.closeWhenIdle();
       try {
-        client.executeAwait(
-            Operation.read("pit.close", timeout),
-            (ignored, context) -> async(lease.client(), context).closePointInTime(r -> r.id(id)));
-      } finally {
-        lease.close();
+        ownership.cleanup.get(timeout.toNanos(), java.util.concurrent.TimeUnit.NANOSECONDS);
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+        throw new ClientException(
+            ClientException.Kind.DRIVER_FAILURE, "PIT cleanup interrupted", interrupted);
+      } catch (java.util.concurrent.TimeoutException expired) {
+        throw new ClientException(
+            ClientException.Kind.TIMEOUT,
+            "PIT cleanup is still owned by its native generation",
+            expired);
+      } catch (java.util.concurrent.ExecutionException failed) {
+        throw new ClientException(
+            ClientException.Kind.DRIVER_FAILURE,
+            "PIT cleanup failed; server expiry remains bounded",
+            failed.getCause());
       }
     }
   }
 
+  private static ElasticsearchAsyncClient async(
+      ElasticsearchClient client, ElasticsearchSettings settings, Duration ceiling) {
+    int millis = (int) Math.max(1, ceiling.toMillis());
+    return async(
+        client, duration -> (int) Math.max(1, Math.min(millis, duration.toMillis())), settings);
+  }
+
   private static ElasticsearchAsyncClient async(ElasticsearchClient client, CallContext context) {
     // This view borrows the generation's transport. Only the adapter closes that transport.
-    ElasticsearchSettings settings = context.settings(ElasticsearchSettings.class);
+    return async(client, context::remainingMillis, context.settings(ElasticsearchSettings.class));
+  }
+
+  private static ElasticsearchAsyncClient async(
+      ElasticsearchClient client,
+      java.util.function.ToIntFunction<Duration> remainingMillis,
+      ElasticsearchSettings settings) {
     co.elastic.clients.transport.rest5_client.Rest5ClientOptions.Builder options =
         (co.elastic.clients.transport.rest5_client.Rest5ClientOptions.Builder)
             client._transportOptions().toBuilder();
@@ -286,13 +398,13 @@ public final class ManagedSearch {
             org.apache.hc.client5.http.config.RequestConfig.custom()
                 .setConnectionRequestTimeout(
                     org.apache.hc.core5.util.Timeout.ofMilliseconds(
-                        context.remainingMillis(settings.connectTimeout())))
+                        remainingMillis.applyAsInt(settings.connectTimeout())))
                 .setConnectTimeout(
                     org.apache.hc.core5.util.Timeout.ofMilliseconds(
-                        context.remainingMillis(settings.connectTimeout())))
+                        remainingMillis.applyAsInt(settings.connectTimeout())))
                 .setResponseTimeout(
                     org.apache.hc.core5.util.Timeout.ofMilliseconds(
-                        context.remainingMillis(settings.readTimeout())))
+                        remainingMillis.applyAsInt(settings.readTimeout())))
                 .setRedirectsEnabled(false)
                 .build());
     return new ElasticsearchAsyncClient(client._transport(), options.build());

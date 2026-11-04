@@ -49,6 +49,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     final LifecycleCoordinator.Owned<C> ownership;
     int references;
     long retiredAt;
+    boolean credentialsInvalid;
     boolean retired;
     boolean closing;
     boolean disposed;
@@ -167,24 +168,45 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     CredentialWatch watch = credentials;
     if (watch != null) watch.check();
     synchronized (state) {
-      ensureOpen();
-      if (inFlight >= policy.maxInFlight())
-        throw new ClientException(
-            ClientException.Kind.OVERLOADED, "Resource in-flight limit reached");
-      Generation generation = active;
-      generation.references++;
-      inFlight++;
-      return new ClientSession<>(
-          generation.client,
-          generation.snapshot.revision(),
-          generation.snapshot.settings(),
-          () -> release(generation),
-          () -> {
-            synchronized (state) {
-              return !generation.closing && !generation.disposed;
-            }
-          });
+      return acquireLocked(active, active.snapshot);
     }
+  }
+
+  private ClientSession<C> acquire(Generation generation, ConfigSnapshot<S> snapshot) {
+    CredentialWatch watch = credentials;
+    if (watch != null) watch.check();
+    synchronized (state) {
+      return acquireLocked(generation, snapshot);
+    }
+  }
+
+  private ClientSession<C> acquireLocked(Generation generation, ConfigSnapshot<S> snapshot) {
+    ensureOpen();
+    if (generation.credentialsInvalid)
+      throw new ClientException(
+          ClientException.Kind.REVOKED, "Session credentials were superseded");
+    if (generation.closing || generation.disposed)
+      throw new ClientException(ClientException.Kind.CLOSED, "Session generation is closed");
+    if (inFlight >= policy.maxInFlight())
+      throw new ClientException(
+          ClientException.Kind.OVERLOADED, "Resource in-flight limit reached");
+    generation.references++;
+    inFlight++;
+    return new ClientSession<>(
+        generation.client,
+        snapshot.revision(),
+        snapshot.settings(),
+        () -> release(generation),
+        () -> {
+          CredentialWatch currentWatch = credentials;
+          if (currentWatch != null) currentWatch.check();
+          synchronized (state) {
+            ensureOpen();
+            return !generation.credentialsInvalid && !generation.closing && !generation.disposed;
+          }
+        },
+        this,
+        () -> acquire(generation, snapshot));
   }
 
   private void ensureOpen() {
@@ -397,6 +419,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
           }
           Generation previous = active;
           active = candidate;
+          previous.credentialsInvalid = true;
           previous.retired = true;
           retiring = previous;
           previous.retiredAt = System.nanoTime();
@@ -525,13 +548,21 @@ public final class ManagedClient<C, S> implements AutoCloseable {
    * Wait on the caller while dispatching only the nonblocking native invocation on a call worker.
    */
   public <T> T executeAwait(Operation operation, AsyncCall<C, T> call) {
+    return executeAwait(null, operation, call);
+  }
+
+  /**
+   * Execute on the session's native generation and frozen configuration; retain physical ownership
+   * independently.
+   */
+  public <T> T executeAwait(ClientSession<C> session, Operation operation, AsyncCall<C, T> call) {
     Objects.requireNonNull(call, "call");
     if (CompletionDispatcher.inCompletionThread())
       throw new ClientException(
           ClientException.Kind.INVALID_REQUEST,
           "Use asynchronous composition instead of a blocking SDK call inside a completion callback");
     try {
-      return executeAsync(operation, call).get();
+      return executeAsync(session, operation, call).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new ClientException(
@@ -555,6 +586,15 @@ public final class ManagedClient<C, S> implements AutoCloseable {
   }
 
   public <T> CompletableFuture<T> executeAsync(Operation operation, AsyncCall<C, T> call) {
+    return executeAsync(null, operation, call);
+  }
+
+  /**
+   * A session from this handle pins native/settings/revision together across ordinary configuration
+   * updates.
+   */
+  public <T> CompletableFuture<T> executeAsync(
+      ClientSession<C> session, Operation operation, AsyncCall<C, T> call) {
     Objects.requireNonNull(operation, "operation");
     Objects.requireNonNull(call, "call");
     long started = System.nanoTime();
@@ -566,7 +606,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
       runtime.admission.check(resource, operation);
       completion = runtime.reserveCompletion();
       permit = circuit.acquire();
-      lease = session();
+      lease = session == null ? session() : session.retainFor(this);
       try {
         context.limitTo(adapter.operationTimeout(settingsOf(lease), operation));
       } catch (RuntimeException | Error failure) {
