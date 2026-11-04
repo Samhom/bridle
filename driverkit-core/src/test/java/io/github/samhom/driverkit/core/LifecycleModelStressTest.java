@@ -229,9 +229,8 @@ class LifecycleModelStressTest {
                           try (ClientSession<NativeResource> lease = client.session()) {
                             assertEquals(lease.revision(), lease.settings(Long.class).longValue());
                             assertEquals(lease.revision(), lease.client().read());
-                            lease
-                                .close(); // Closing a borrowed lease twice must not decrement
-                                          // ownership twice.
+                            // Explicit and automatic close must release ownership only once.
+                            lease.close();
                           }
                         } else if (action < 68) {
                           long next = revisions.incrementAndGet(slot);

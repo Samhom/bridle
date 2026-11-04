@@ -1,0 +1,96 @@
+name: Prepare signed release bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing reviewed release tag, for example v0.1.0'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+    env:
+      GNUPGHOME: ${{ runner.temp }}/driverkit-gnupg
+    steps:
+      - name: Validate requested tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import os,re
+          if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+(?:-rc\.[0-9]+)?',os.environ['RELEASE_TAG']):
+              raise SystemExit('Expected a versioned release tag')
+          PY
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check reviewed ancestry, version and release notes
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          python3 - <<'PY'
+          import os, pathlib, xml.etree.ElementTree as ET
+          root=ET.parse('pom.xml').getroot()
+          version=root.findtext('{http://maven.apache.org/POM/4.0.0}version')
+          if os.environ['RELEASE_TAG']!='v'+version or 'SNAPSHOT' in version:
+              raise SystemExit('Tag and non-snapshot POM version must match')
+          if '['+version+']' not in pathlib.Path('CHANGELOG.md').read_text():
+              raise SystemExit('Prepare version-specific release notes before tagging')
+          PY
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Import release signing key
+        env:
+          SIGNING_PRIVATE_KEY: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY }}
+          SIGNING_FINGERPRINT: ${{ secrets.RELEASE_SIGNING_FINGERPRINT }}
+        run: |
+          test -n "$SIGNING_PRIVATE_KEY" && test -n "$SIGNING_FINGERPRINT" || { echo 'Configure release-environment signing secrets first'; exit 1; }
+          install -d -m 700 "$GNUPGHOME"
+          printf '%s' "$SIGNING_PRIVATE_KEY" | gpg --batch --import
+          gpg --batch --list-secret-keys "$SIGNING_FINGERPRINT" >/dev/null
+      - name: Verify and sign release artifacts
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.RELEASE_SIGNING_PASSPHRASE }}
+        run: |
+          mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2-cache" -Prelease verify com.spotify.fmt:fmt-maven-plugin:2.25:check org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree -DoutputType=json -DoutputFile=target/dependencies.json
+          release_version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('pom.xml').getroot().findtext('{http://maven.apache.org/POM/4.0.0}version'))")
+          python3 tools/api_compatibility.py --jar "driverkit-core/target/driverkit-core-$release_version.jar" --baseline api/core-development.json
+      - name: Audit and supplement packaged dependency inventory
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.RELEASE_SIGNING_PASSPHRASE }}
+          SIGNING_FINGERPRINT: ${{ secrets.RELEASE_SIGNING_FINGERPRINT }}
+        run: |
+          python3 tools/audit_dependencies.py
+          python3 tools/release_inventory.py
+          gpg --batch --yes --armor --pinentry-mode loopback --passphrase-fd 0 --local-user "$SIGNING_FINGERPRINT" --detach-sign target/driverkit-embedded-sbom.json <<< "$MAVEN_GPG_PASSPHRASE"
+          python3 tools/release_bundle.py --output release-bundle --fingerprint "$SIGNING_FINGERPRINT"
+          gpg --batch --yes --armor --pinentry-mode loopback --passphrase-fd 0 --local-user "$SIGNING_FINGERPRINT" --detach-sign release-bundle/manifest.json <<< "$MAVEN_GPG_PASSPHRASE"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: signed-driverkit-release
+          path: release-bundle/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Forget ephemeral key material
+        if: always()
+        run: |
+          gpgconf --kill gpg-agent || true
+          python3 - <<'PY'
+          import os,pathlib,shutil
+          target=pathlib.Path(os.environ['GNUPGHOME']).resolve()
+          expected=(pathlib.Path(os.environ['RUNNER_TEMP'])/'driverkit-gnupg').resolve()
+          if target!=expected:raise SystemExit('Unexpected ephemeral key directory')
+          if target.exists():shutil.rmtree(target)
+          PY

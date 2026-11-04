@@ -64,6 +64,10 @@ jobs:
         run: |
           python3 tools/check_compatibility.py
           python3 -m unittest discover -s tools -p 'test_check_compatibility.py'
+          sdk_version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('pom.xml').getroot().findtext('{http://maven.apache.org/POM/4.0.0}version'))")
+          python3 tools/api_compatibility.py --jar "driverkit-core/target/driverkit-core-$sdk_version.jar" --baseline api/core-development.json
+          python3 -m unittest discover -s tools -p 'test_api_compatibility.py'
+          python3 -m unittest discover -s tools -p 'test_release_bundle.py'
       - name: Formatting
         run: mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2-cache" com.spotify.fmt:fmt-maven-plugin:2.25:check
       - name: Resolve audit inventory
@@ -81,5 +85,6 @@ jobs:
         if: matrix.java == '17'
         run: |
           mkdir -p .local/java8
-          javac -cp driverkit-core/target/driverkit-core-0.1.0-SNAPSHOT.jar -d .local/java8 .ci/Java8Smoke.java
-          java -cp .local/java8:driverkit-core/target/driverkit-core-0.1.0-SNAPSHOT.jar Java8Smoke
+          sdk_version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('pom.xml').getroot().findtext('{http://maven.apache.org/POM/4.0.0}version'))")
+          javac -cp "driverkit-core/target/driverkit-core-$sdk_version.jar" -d .local/java8 .ci/Java8Smoke.java
+          java -cp ".local/java8:driverkit-core/target/driverkit-core-$sdk_version.jar" Java8Smoke

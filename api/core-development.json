@@ -1,0 +1,1664 @@
+{
+  "format": 1,
+  "jar_sha256": "b6f6a17073a13a0f2206ddaf1798726eb07e8127ccceb56ddd0c15484e8ca075",
+  "classes": {
+    "io/github/samhom/driverkit/core/AdapterCapabilities": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "nativeApi(Z)Lio/github/samhom/driverkit/core/AdapterCapabilities;": {
+          "flags": 9
+        },
+        "none()Lio/github/samhom/driverkit/core/AdapterCapabilities;": {
+          "flags": 9
+        },
+        "support(Lio/github/samhom/driverkit/core/AdapterCapabilities$Feature;)Lio/github/samhom/driverkit/core/AdapterCapabilities$Support;": {
+          "flags": 1
+        },
+        "requireManaged(Lio/github/samhom/driverkit/core/AdapterCapabilities$Feature;)V": {
+          "flags": 1
+        },
+        "declared()Ljava/util/Map;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/AdapterCapabilities$Feature": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "NATIVE_APILio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 25
+        },
+        "ASYNCLio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 25
+        },
+        "TRANSACTIONLio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 25
+        },
+        "STREAMING_RESULTSLio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 25
+        },
+        "NATIVE_CANCELLATIONLio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/AdapterCapabilities$Feature;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/AdapterCapabilities$Support": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "UNSUPPORTEDLio/github/samhom/driverkit/core/AdapterCapabilities$Support;": {
+          "flags": 25
+        },
+        "NATIVE_SESSION_ONLYLio/github/samhom/driverkit/core/AdapterCapabilities$Support;": {
+          "flags": 25
+        },
+        "MANAGEDLio/github/samhom/driverkit/core/AdapterCapabilities$Support;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/AdapterCapabilities$Support;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/AdapterCapabilities$Support;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/AdmissionPolicy": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {
+        "ALLOWLio/github/samhom/driverkit/core/AdmissionPolicy;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "check(Lio/github/samhom/driverkit/core/ResourceId;Lio/github/samhom/driverkit/core/Operation;)V": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/AsyncCall": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "execute(Ljava/lang/Object;Lio/github/samhom/driverkit/core/CallContext;)Ljava/util/concurrent/CompletionStage;": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ByteBudget": {
+      "flags": 17,
+      "super": "java/io/OutputStream",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(J)V": {
+          "flags": 1
+        },
+        "write(I)V": {
+          "flags": 1
+        },
+        "write([BII)V": {
+          "flags": 1
+        },
+        "bytes()J": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Call": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "execute(Ljava/lang/Object;Lio/github/samhom/driverkit/core/CallContext;)Ljava/lang/Object;": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CallContext": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "openScope()Lio/github/samhom/driverkit/core/ContextPropagation$Scope;": {
+          "flags": 1
+        },
+        "wrap(Ljava/lang/Runnable;)Ljava/lang/Runnable;": {
+          "flags": 1
+        },
+        "wrap(Ljava/util/function/BiConsumer;)Ljava/util/function/BiConsumer;": {
+          "flags": 1
+        },
+        "wrap(Ljava/util/function/Function;)Ljava/util/function/Function;": {
+          "flags": 1
+        },
+        "settings(Ljava/lang/Class;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "remaining()Ljava/time/Duration;": {
+          "flags": 1
+        },
+        "remainingMillis(Ljava/time/Duration;)I": {
+          "flags": 1
+        },
+        "checkDeadline()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CallContexts": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "current()Ljava/util/Map;": {
+          "flags": 9
+        },
+        "open(Ljava/util/Map;)Lio/github/samhom/driverkit/core/ContextPropagation$Scope;": {
+          "flags": 9
+        },
+        "capture()Lio/github/samhom/driverkit/core/ContextPropagation$Snapshot;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CircuitStatus": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "state()Lio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 1
+        },
+        "consecutiveFailures()I": {
+          "flags": 1
+        },
+        "retryAfterNanos()J": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CircuitStatus$State": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "DISABLEDLio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 25
+        },
+        "CLOSEDLio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 25
+        },
+        "OPENLio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 25
+        },
+        "HALF_OPENLio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/CircuitStatus$State;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientException": {
+      "flags": 17,
+      "super": "java/lang/RuntimeException",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "retryAdvice(Lio/github/samhom/driverkit/core/Operation;)Lio/github/samhom/driverkit/core/ClientException$RetryAdvice;": {
+          "flags": 1
+        },
+        "<init>(Lio/github/samhom/driverkit/core/ClientException$Kind;Ljava/lang/String;)V": {
+          "flags": 1
+        },
+        "<init>(Lio/github/samhom/driverkit/core/ClientException$Kind;Ljava/lang/String;Ljava/lang/Throwable;)V": {
+          "flags": 1
+        },
+        "kind()Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientException$Kind": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "CLOSEDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "REVOKEDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "OVERLOADEDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "TIMEOUTLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "UPDATE_REJECTEDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "DRIVER_FAILURELio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "WRITE_OUTCOME_UNKNOWNLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "AUTHENTICATIONLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "AUTHORIZATIONLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "NOT_FOUNDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "CONFLICTLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "INVALID_REQUESTLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "CIRCUIT_OPENLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "RATE_LIMITEDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "CONNECTION_FAILURELio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "TLS_FAILURELio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "SERVER_REJECTEDLio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        },
+        "UNAVAILABLELio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientException$RetryAdvice": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "DO_NOT_RETRYLio/github/samhom/driverkit/core/ClientException$RetryAdvice;": {
+          "flags": 25
+        },
+        "RETRY_READ_WITH_BACKOFFLio/github/samhom/driverkit/core/ClientException$RetryAdvice;": {
+          "flags": 25
+        },
+        "RECONCILE_WRITELio/github/samhom/driverkit/core/ClientException$RetryAdvice;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/ClientException$RetryAdvice;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/ClientException$RetryAdvice;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientPolicy": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(ILjava/time/Duration;Ljava/time/Duration;)V": {
+          "flags": 1
+        },
+        "<init>(ILjava/time/Duration;Ljava/time/Duration;Lio/github/samhom/driverkit/core/ExecutionPolicy;)V": {
+          "flags": 1
+        },
+        "defaults()Lio/github/samhom/driverkit/core/ClientPolicy;": {
+          "flags": 9
+        },
+        "execution()Lio/github/samhom/driverkit/core/ExecutionPolicy;": {
+          "flags": 1
+        },
+        "maxInFlight()I": {
+          "flags": 1
+        },
+        "warmupTimeout()Ljava/time/Duration;": {
+          "flags": 1
+        },
+        "shutdownTimeout()Ljava/time/Duration;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientRuntime": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "java/lang/AutoCloseable"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>()V": {
+          "flags": 1
+        },
+        "<init>(IIILio/github/samhom/driverkit/core/Observer;)V": {
+          "flags": 1
+        },
+        "<init>(IIILio/github/samhom/driverkit/core/Observer;Lio/github/samhom/driverkit/core/AdmissionPolicy;)V": {
+          "flags": 1
+        },
+        "<init>(IIILio/github/samhom/driverkit/core/Observer;Lio/github/samhom/driverkit/core/AdmissionPolicy;II)V": {
+          "flags": 1
+        },
+        "<init>(IIILio/github/samhom/driverkit/core/Observer;Lio/github/samhom/driverkit/core/AdmissionPolicy;IILio/github/samhom/driverkit/core/ContextPropagation;)V": {
+          "flags": 1
+        },
+        "isolatedThreadReservations()I": {
+          "flags": 1
+        },
+        "register(Lio/github/samhom/driverkit/core/ConfigSnapshot;Lio/github/samhom/driverkit/core/DriverAdapter;Lio/github/samhom/driverkit/core/ClientPolicy;)Lio/github/samhom/driverkit/core/ManagedClient;": {
+          "flags": 1
+        },
+        "clientCount()I": {
+          "flags": 1
+        },
+        "unregister(Lio/github/samhom/driverkit/core/ResourceId;)Z": {
+          "flags": 1
+        },
+        "close()V": {
+          "flags": 1
+        },
+        "close(Ljava/time/Duration;)V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientSession": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "java/lang/AutoCloseable"
+      ],
+      "fields": {},
+      "methods": {
+        "settings(Ljava/lang/Class;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "client()Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "revision()J": {
+          "flags": 1
+        },
+        "close()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ClientStatus": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "revision()J": {
+          "flags": 1
+        },
+        "inFlight()I": {
+          "flags": 1
+        },
+        "retiringGenerations()I": {
+          "flags": 1
+        },
+        "closed()Z": {
+          "flags": 1
+        },
+        "revoked()Z": {
+          "flags": 1
+        },
+        "attemptedRevision()J": {
+          "flags": 1
+        },
+        "rejectedUpdates()J": {
+          "flags": 1
+        },
+        "ownedResources()I": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CompositeObserver": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/Observer"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>([Lio/github/samhom/driverkit/core/Observer;)V": {
+          "flags": 1
+        },
+        "start(Lio/github/samhom/driverkit/core/ResourceId;Ljava/lang/String;Lio/github/samhom/driverkit/core/Operation;J)Lio/github/samhom/driverkit/core/Observation;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ConfigSnapshot": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(Lio/github/samhom/driverkit/core/ResourceId;JLjava/lang/Object;)V": {
+          "flags": 1
+        },
+        "<init>(Lio/github/samhom/driverkit/core/ResourceId;JLjava/lang/Object;Lio/github/samhom/driverkit/core/SettingsSchema;)V": {
+          "flags": 1
+        },
+        "resource()Lio/github/samhom/driverkit/core/ResourceId;": {
+          "flags": 1
+        },
+        "revision()J": {
+          "flags": 1
+        },
+        "settings()Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "schemaId()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "schemaVersion()I": {
+          "flags": 1
+        },
+        "withRevision(J)Lio/github/samhom/driverkit/core/ConfigSnapshot;": {
+          "flags": 1
+        },
+        "toString()Ljava/lang/String;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ConfigurationRelease": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(Lio/github/samhom/driverkit/core/ConfigSnapshot;JLjava/lang/String;I)V": {
+          "flags": 1
+        },
+        "snapshot()Lio/github/samhom/driverkit/core/ConfigSnapshot;": {
+          "flags": 1
+        },
+        "expectedRevision()J": {
+          "flags": 1
+        },
+        "targets(Ljava/lang/String;)Z": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ConfigurationSource": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "subscribe(Ljava/util/function/Consumer;)Ljava/lang/AutoCloseable;": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ConfigurationStatus": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "desiredRevision()J": {
+          "flags": 1
+        },
+        "attemptedRevision()J": {
+          "flags": 1
+        },
+        "effectiveRevision()J": {
+          "flags": 1
+        },
+        "phase()Lio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 1
+        },
+        "failedPhase()Lio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 1
+        },
+        "failureKind()Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 1
+        },
+        "elapsedNanos()J": {
+          "flags": 1
+        },
+        "observedAt()Ljava/time/Instant;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ConfigurationStatus$Phase": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "QUEUEDLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "VALIDATIONLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "CREATELio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "WARMUPLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "DRAINLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "RECOVERYLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "PUBLISHLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "APPLIEDLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "FAILEDLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "WAITINGLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "CLOSEDLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        },
+        "REVOKEDLio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/ConfigurationStatus$Phase;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ConsumerAdapter": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "id()Ljava/lang/String;": {
+          "flags": 1025
+        },
+        "validate(Ljava/lang/Object;)V": {
+          "flags": 1025
+        },
+        "validateUpdate(Ljava/lang/Object;Ljava/lang/Object;)V": {
+          "flags": 1
+        },
+        "credentials(Ljava/lang/Object;)Lio/github/samhom/driverkit/core/CredentialsProvider;": {
+          "flags": 1
+        },
+        "updatePlan(Ljava/lang/Object;Ljava/lang/Object;)Lio/github/samhom/driverkit/core/UpdatePlan;": {
+          "flags": 1
+        },
+        "start(Ljava/lang/Object;Lio/github/samhom/driverkit/core/DeliveryGuard;)Ljava/lang/Object;": {
+          "flags": 1025
+        },
+        "start(Ljava/lang/Object;Lio/github/samhom/driverkit/core/DeliveryGuard;Ljava/time/Duration;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "pause(Ljava/lang/Object;)V": {
+          "flags": 1025
+        },
+        "resume(Ljava/lang/Object;)V": {
+          "flags": 1025
+        },
+        "close(Ljava/lang/Object;)V": {
+          "flags": 1025
+        },
+        "close(Ljava/lang/Object;Ljava/time/Duration;)V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ContextPropagation": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {
+        "NONELio/github/samhom/driverkit/core/ContextPropagation;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "capture()Lio/github/samhom/driverkit/core/ContextPropagation$Snapshot;": {
+          "flags": 1025
+        },
+        "combine([Lio/github/samhom/driverkit/core/ContextPropagation;)Lio/github/samhom/driverkit/core/ContextPropagation;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ContextPropagation$Scope": {
+      "flags": 1545,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "java/lang/AutoCloseable"
+      ],
+      "fields": {},
+      "methods": {
+        "close()V": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ContextPropagation$Snapshot": {
+      "flags": 1545,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "open()Lio/github/samhom/driverkit/core/ContextPropagation$Scope;": {
+          "flags": 1025
+        },
+        "run(Ljava/lang/Runnable;)V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CredentialSource": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/CredentialsProvider"
+      ],
+      "fields": {},
+      "methods": {
+        "state()Lio/github/samhom/driverkit/core/CredentialState;": {
+          "flags": 1025
+        },
+        "subscribe(Ljava/util/function/Consumer;)Ljava/lang/AutoCloseable;": {
+          "flags": 1025
+        },
+        "refresh()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CredentialState": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/ImmutableSettings"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(JLjava/time/Instant;Ljava/time/Instant;Z)V": {
+          "flags": 1
+        },
+        "version()J": {
+          "flags": 1
+        },
+        "refreshAt()Ljava/time/Instant;": {
+          "flags": 1
+        },
+        "expiresAt()Ljava/time/Instant;": {
+          "flags": 1
+        },
+        "revoked()Z": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CredentialStatus": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "desiredVersion()J": {
+          "flags": 1
+        },
+        "activeVersion()J": {
+          "flags": 1
+        },
+        "expiresAt()Ljava/time/Instant;": {
+          "flags": 1
+        },
+        "state()Lio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 1
+        },
+        "failureKind()Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CredentialStatus$State": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "ROTATINGLio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 25
+        },
+        "ACTIVELio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 25
+        },
+        "FAILEDLio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 25
+        },
+        "REVOKEDLio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 25
+        },
+        "CLOSEDLio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/CredentialStatus$State;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Credentials": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "java/lang/AutoCloseable"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(Ljava/lang/String;[C)V": {
+          "flags": 1
+        },
+        "username()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "passwordText()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "close()V": {
+          "flags": 1
+        },
+        "toString()Ljava/lang/String;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/CredentialsProvider": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "resolve()Lio/github/samhom/driverkit/core/Credentials;": {
+          "flags": 1025
+        },
+        "environment(Ljava/lang/String;Ljava/lang/String;)Lio/github/samhom/driverkit/core/CredentialsProvider;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/DeliveryGuard": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "invoke(Ljava/util/concurrent/Callable;Ljava/lang/Object;)Ljava/lang/Object;": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/DiagnosticBuffer": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/Observer"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(ILjava/time/Duration;I)V": {
+          "flags": 1
+        },
+        "snapshot()Ljava/util/List;": {
+          "flags": 1
+        },
+        "clear()V": {
+          "flags": 1
+        },
+        "configuration(Lio/github/samhom/driverkit/core/ResourceId;Lio/github/samhom/driverkit/core/ConfigurationStatus;)V": {
+          "flags": 1
+        },
+        "start(Lio/github/samhom/driverkit/core/ResourceId;Ljava/lang/String;Lio/github/samhom/driverkit/core/Operation;J)Lio/github/samhom/driverkit/core/Observation;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/DiagnosticBuffer$Event": {
+      "flags": 25,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {
+        "timeLjava/time/Instant;": {
+          "flags": 17
+        },
+        "resourceLio/github/samhom/driverkit/core/ResourceId;": {
+          "flags": 17
+        },
+        "kindLio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 17
+        },
+        "revisionJ": {
+          "flags": 17
+        },
+        "elapsedNanosJ": {
+          "flags": 17
+        },
+        "outcomeLio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 17
+        }
+      },
+      "methods": {}
+    },
+    "io/github/samhom/driverkit/core/DiagnosticBuffer$Kind": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "SLOW_CALLLio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 25
+        },
+        "CALL_FAILURELio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 25
+        },
+        "CONFIGURATION_FAILURELio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 25
+        },
+        "CLEANUP_FAILURELio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/DiagnosticBuffer$Kind;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/DriverAdapter": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "id()Ljava/lang/String;": {
+          "flags": 1025
+        },
+        "validate(Ljava/lang/Object;)V": {
+          "flags": 1025
+        },
+        "validateUpdate(Ljava/lang/Object;Ljava/lang/Object;)V": {
+          "flags": 1
+        },
+        "credentials(Ljava/lang/Object;)Lio/github/samhom/driverkit/core/CredentialsProvider;": {
+          "flags": 1
+        },
+        "updatePlan(Ljava/lang/Object;Ljava/lang/Object;)Lio/github/samhom/driverkit/core/UpdatePlan;": {
+          "flags": 1
+        },
+        "operationTimeout(Ljava/lang/Object;Lio/github/samhom/driverkit/core/Operation;)Ljava/time/Duration;": {
+          "flags": 1
+        },
+        "create(Ljava/lang/Object;)Ljava/lang/Object;": {
+          "flags": 1025
+        },
+        "create(Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "warmup(Ljava/lang/Object;Ljava/time/Duration;)V": {
+          "flags": 1025
+        },
+        "warmup(Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)V": {
+          "flags": 1
+        },
+        "close(Ljava/lang/Object;)V": {
+          "flags": 1025
+        },
+        "close(Ljava/lang/Object;Ljava/time/Duration;)V": {
+          "flags": 1
+        },
+        "classify(Ljava/lang/Throwable;Lio/github/samhom/driverkit/core/Operation;)Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 1
+        },
+        "capabilities()Lio/github/samhom/driverkit/core/AdapterCapabilities;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Endpoint": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(Ljava/lang/String;IZ)V": {
+          "flags": 1
+        },
+        "host()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "port()I": {
+          "flags": 1
+        },
+        "tls()Z": {
+          "flags": 1
+        },
+        "uri(Ljava/lang/String;Ljava/lang/String;)Ljava/net/URI;": {
+          "flags": 1
+        },
+        "authority()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "toString()Ljava/lang/String;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ExclusiveConsumer": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "java/lang/AutoCloseable"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(Lio/github/samhom/driverkit/core/ConfigSnapshot;Lio/github/samhom/driverkit/core/ConsumerAdapter;Lio/github/samhom/driverkit/core/ClientPolicy;Lio/github/samhom/driverkit/core/Observer;)V": {
+          "flags": 1
+        },
+        "state()Lio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 1
+        },
+        "inFlight()I": {
+          "flags": 1
+        },
+        "revision()J": {
+          "flags": 1
+        },
+        "configurationStatus()Lio/github/samhom/driverkit/core/ConfigurationStatus;": {
+          "flags": 1
+        },
+        "configurationHistory()Ljava/util/List;": {
+          "flags": 1
+        },
+        "apply(Lio/github/samhom/driverkit/core/ConfigurationRelease;Ljava/lang/String;)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 1
+        },
+        "reload(Lio/github/samhom/driverkit/core/ConfigSnapshot;)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 1
+        },
+        "reload(Lio/github/samhom/driverkit/core/ConfigSnapshot;J)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 1
+        },
+        "credentialStatus()Lio/github/samhom/driverkit/core/CredentialStatus;": {
+          "flags": 1
+        },
+        "bindCredentials(Lio/github/samhom/driverkit/core/CredentialSource;)V": {
+          "flags": 1
+        },
+        "bind(Lio/github/samhom/driverkit/core/ConfigurationSource;)V": {
+          "flags": 1
+        },
+        "revoke()V": {
+          "flags": 1
+        },
+        "close()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ExclusiveConsumer$State": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "RUNNINGLio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 25
+        },
+        "DRAININGLio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 25
+        },
+        "FAILEDLio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 25
+        },
+        "REVOKEDLio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 25
+        },
+        "CLOSEDLio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/ExclusiveConsumer$State;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ExecutionPolicy": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "shared()Lio/github/samhom/driverkit/core/ExecutionPolicy;": {
+          "flags": 9
+        },
+        "isolated(II)Lio/github/samhom/driverkit/core/ExecutionPolicy;": {
+          "flags": 9
+        },
+        "withCircuitBreaker(ILjava/time/Duration;)Lio/github/samhom/driverkit/core/ExecutionPolicy;": {
+          "flags": 1
+        },
+        "threads()I": {
+          "flags": 1
+        },
+        "queuedCalls()I": {
+          "flags": 1
+        },
+        "failureThreshold()I": {
+          "flags": 1
+        },
+        "openFor()Ljava/time/Duration;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/FactoryAdapter": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/DriverAdapter"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(Ljava/lang/String;Lio/github/samhom/driverkit/core/FactoryAdapter$Factory;Lio/github/samhom/driverkit/core/FactoryAdapter$Readiness;Lio/github/samhom/driverkit/core/FactoryAdapter$Closer;)V": {
+          "flags": 1
+        },
+        "id()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "validate(Ljava/lang/Object;)V": {
+          "flags": 1
+        },
+        "create(Ljava/lang/Object;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "warmup(Ljava/lang/Object;Ljava/time/Duration;)V": {
+          "flags": 1
+        },
+        "close(Ljava/lang/Object;)V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/FactoryAdapter$Closer": {
+      "flags": 1545,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "close(Ljava/lang/Object;)V": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/FactoryAdapter$Factory": {
+      "flags": 1545,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "create(Ljava/lang/Object;)Ljava/lang/Object;": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/FactoryAdapter$Readiness": {
+      "flags": 1545,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "check(Ljava/lang/Object;Ljava/time/Duration;)V": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/FailureClassifier": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "unwrap(Ljava/lang/Throwable;)Ljava/lang/Throwable;": {
+          "flags": 9
+        },
+        "http(ILio/github/samhom/driverkit/core/Operation;)Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 9
+        },
+        "uncertain(Lio/github/samhom/driverkit/core/Operation;Lio/github/samhom/driverkit/core/ClientException$Kind;)Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 9
+        },
+        "transport(Ljava/lang/Throwable;Lio/github/samhom/driverkit/core/Operation;)Lio/github/samhom/driverkit/core/ClientException$Kind;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ImmutableSettings": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {}
+    },
+    "io/github/samhom/driverkit/core/Limits": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "timeout(Ljava/time/Duration;)Ljava/time/Duration;": {
+          "flags": 9
+        },
+        "count(II)I": {
+          "flags": 9
+        },
+        "name(Ljava/lang/String;)Ljava/lang/String;": {
+          "flags": 9
+        },
+        "bytes([BI)V": {
+          "flags": 9
+        },
+        "messageKey(Ljava/lang/String;)V": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ManagedClient": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "java/lang/AutoCloseable"
+      ],
+      "fields": {},
+      "methods": {
+        "resource()Lio/github/samhom/driverkit/core/ResourceId;": {
+          "flags": 1
+        },
+        "capabilities()Lio/github/samhom/driverkit/core/AdapterCapabilities;": {
+          "flags": 1
+        },
+        "driverId()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "status()Lio/github/samhom/driverkit/core/ClientStatus;": {
+          "flags": 1
+        },
+        "metrics()Lio/github/samhom/driverkit/core/RuntimeMetrics;": {
+          "flags": 1
+        },
+        "circuitStatus()Lio/github/samhom/driverkit/core/CircuitStatus;": {
+          "flags": 1
+        },
+        "cleanupFailures()I": {
+          "flags": 1
+        },
+        "session()Lio/github/samhom/driverkit/core/ClientSession;": {
+          "flags": 1
+        },
+        "planUpdate(Lio/github/samhom/driverkit/core/ConfigSnapshot;)Lio/github/samhom/driverkit/core/UpdatePlan;": {
+          "flags": 1
+        },
+        "configurationStatus()Lio/github/samhom/driverkit/core/ConfigurationStatus;": {
+          "flags": 1
+        },
+        "configurationHistory()Ljava/util/List;": {
+          "flags": 1
+        },
+        "apply(Lio/github/samhom/driverkit/core/ConfigurationRelease;Ljava/lang/String;)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 1
+        },
+        "reload(Lio/github/samhom/driverkit/core/ConfigSnapshot;)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 1
+        },
+        "reload(Lio/github/samhom/driverkit/core/ConfigSnapshot;J)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 1
+        },
+        "bindCredentials(Lio/github/samhom/driverkit/core/CredentialSource;)V": {
+          "flags": 1
+        },
+        "credentialStatus()Lio/github/samhom/driverkit/core/CredentialStatus;": {
+          "flags": 1
+        },
+        "bind(Lio/github/samhom/driverkit/core/ConfigurationSource;)Ljava/lang/AutoCloseable;": {
+          "flags": 1
+        },
+        "execute(Lio/github/samhom/driverkit/core/Operation;Lio/github/samhom/driverkit/core/Call;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "executeAwait(Lio/github/samhom/driverkit/core/Operation;Lio/github/samhom/driverkit/core/AsyncCall;)Ljava/lang/Object;": {
+          "flags": 1
+        },
+        "executeAsync(Lio/github/samhom/driverkit/core/Operation;Lio/github/samhom/driverkit/core/AsyncCall;)Ljava/util/concurrent/CompletableFuture;": {
+          "flags": 1
+        },
+        "revoke()V": {
+          "flags": 1
+        },
+        "close()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Observation": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {
+        "NOOPLio/github/samhom/driverkit/core/Observation;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "finish(Lio/github/samhom/driverkit/core/Observation$Outcome;J)V": {
+          "flags": 1025
+        },
+        "queued(J)V": {
+          "flags": 1
+        },
+        "openScope()Ljava/lang/AutoCloseable;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Observation$Outcome": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "SUCCESSLio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 25
+        },
+        "ERRORLio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 25
+        },
+        "CANCELLEDLio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 25
+        },
+        "TIMEOUTLio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 25
+        },
+        "REJECTEDLio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/Observation$Outcome;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Observer": {
+      "flags": 1537,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {
+        "NOOPLio/github/samhom/driverkit/core/Observer;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "start(Lio/github/samhom/driverkit/core/ResourceId;Ljava/lang/String;Lio/github/samhom/driverkit/core/Operation;J)Lio/github/samhom/driverkit/core/Observation;": {
+          "flags": 1025
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/Operation": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "read(Ljava/lang/String;Ljava/time/Duration;)Lio/github/samhom/driverkit/core/Operation;": {
+          "flags": 9
+        },
+        "write(Ljava/lang/String;Ljava/time/Duration;)Lio/github/samhom/driverkit/core/Operation;": {
+          "flags": 9
+        },
+        "name()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "timeout()Ljava/time/Duration;": {
+          "flags": 1
+        },
+        "replaySafe()Z": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/PushConfigurationSource": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/ConfigurationSource"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(Lio/github/samhom/driverkit/core/ConfigSnapshot;)V": {
+          "flags": 1
+        },
+        "subscribe(Ljava/util/function/Consumer;)Ljava/lang/AutoCloseable;": {
+          "flags": 1
+        },
+        "publish(Lio/github/samhom/driverkit/core/ConfigurationRelease;Ljava/lang/String;)Z": {
+          "flags": 1
+        },
+        "publish(Lio/github/samhom/driverkit/core/ConfigSnapshot;)Z": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/RateLimitPolicy": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/AdmissionPolicy"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(Ljava/util/Map;)V": {
+          "flags": 1
+        },
+        "check(Lio/github/samhom/driverkit/core/ResourceId;Lio/github/samhom/driverkit/core/Operation;)V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/RateLimitPolicy$Limit": {
+      "flags": 25,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(II)V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/ResourceId": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V": {
+          "flags": 1
+        },
+        "application()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "environment()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "alias()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "equals(Ljava/lang/Object;)Z": {
+          "flags": 1
+        },
+        "hashCode()I": {
+          "flags": 1
+        },
+        "toString()Ljava/lang/String;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/RotatingCredentialsProvider": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [
+        "io/github/samhom/driverkit/core/CredentialSource"
+      ],
+      "fields": {},
+      "methods": {
+        "<init>(Lio/github/samhom/driverkit/core/CredentialsProvider;Lio/github/samhom/driverkit/core/CredentialState;Ljava/lang/Runnable;)V": {
+          "flags": 1
+        },
+        "state()Lio/github/samhom/driverkit/core/CredentialState;": {
+          "flags": 1
+        },
+        "rotate(Lio/github/samhom/driverkit/core/CredentialsProvider;Lio/github/samhom/driverkit/core/CredentialState;)Z": {
+          "flags": 1
+        },
+        "revoke(J)V": {
+          "flags": 1
+        },
+        "resolve()Lio/github/samhom/driverkit/core/Credentials;": {
+          "flags": 1
+        },
+        "subscribe(Ljava/util/function/Consumer;)Ljava/lang/AutoCloseable;": {
+          "flags": 1
+        },
+        "refresh()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/RuntimeMetrics": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {
+        "inFlightI": {
+          "flags": 17
+        },
+        "queuedCallsI": {
+          "flags": 17
+        },
+        "activeWorkersI": {
+          "flags": 17
+        },
+        "queueCapacityI": {
+          "flags": 17
+        },
+        "cleanupFailuresI": {
+          "flags": 17
+        },
+        "rejectedUpdatesJ": {
+          "flags": 17
+        },
+        "retiringAgeNanosJ": {
+          "flags": 17
+        }
+      },
+      "methods": {}
+    },
+    "io/github/samhom/driverkit/core/SettingsSchema": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "copying(Ljava/lang/String;ILjava/lang/Class;Ljava/util/function/UnaryOperator;Ljava/util/function/Consumer;)Lio/github/samhom/driverkit/core/SettingsSchema;": {
+          "flags": 9
+        },
+        "immutable(Ljava/lang/String;ILjava/lang/Class;Ljava/util/function/Consumer;)Lio/github/samhom/driverkit/core/SettingsSchema;": {
+          "flags": 9
+        },
+        "id()Ljava/lang/String;": {
+          "flags": 1
+        },
+        "version()I": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/UpdatePlan": {
+      "flags": 17,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "rebuild()Lio/github/samhom/driverkit/core/UpdatePlan;": {
+          "flags": 9
+        },
+        "builder()Lio/github/samhom/driverkit/core/UpdatePlan$Builder;": {
+          "flags": 9
+        },
+        "effect()Lio/github/samhom/driverkit/core/UpdatePlan$Effect;": {
+          "flags": 1
+        },
+        "fields()Ljava/util/Map;": {
+          "flags": 1
+        },
+        "requireAllowed()V": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/UpdatePlan$Builder": {
+      "flags": 25,
+      "super": "java/lang/Object",
+      "interfaces": [],
+      "fields": {},
+      "methods": {
+        "<init>()V": {
+          "flags": 1
+        },
+        "field(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Lio/github/samhom/driverkit/core/UpdatePlan$Effect;)Lio/github/samhom/driverkit/core/UpdatePlan$Builder;": {
+          "flags": 1
+        },
+        "build()Lio/github/samhom/driverkit/core/UpdatePlan;": {
+          "flags": 1
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/UpdatePlan$Effect": {
+      "flags": 25,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "LIVELio/github/samhom/driverkit/core/UpdatePlan$Effect;": {
+          "flags": 25
+        },
+        "REBUILDLio/github/samhom/driverkit/core/UpdatePlan$Effect;": {
+          "flags": 25
+        },
+        "FORBIDDENLio/github/samhom/driverkit/core/UpdatePlan$Effect;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/UpdatePlan$Effect;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/UpdatePlan$Effect;": {
+          "flags": 9
+        }
+      }
+    },
+    "io/github/samhom/driverkit/core/UpdateResult": {
+      "flags": 17,
+      "super": "java/lang/Enum",
+      "interfaces": [],
+      "fields": {
+        "APPLIEDLio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 25
+        },
+        "STALELio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 25
+        },
+        "NOT_TARGETEDLio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 25
+        },
+        "BUSYLio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 25
+        }
+      },
+      "methods": {
+        "values()[Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 9
+        },
+        "valueOf(Ljava/lang/String;)Lio/github/samhom/driverkit/core/UpdateResult;": {
+          "flags": 9
+        }
+      }
+    }
+  },
+  "label": "Development baseline 681f994; core source tree 8ba05c55b9ff22e14491dff6d706144564ccc6be; not a published release"
+}

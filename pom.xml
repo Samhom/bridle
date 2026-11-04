@@ -167,6 +167,41 @@
     </plugins>
   </build>
   <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions><execution><id>release-sources</id><phase>package</phase><goals><goal>jar-no-fork</goal></goals></execution></executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.12.0</version>
+            <configuration><doclint>none</doclint><failOnError>true</failOnError><detectLinks>false</detectLinks></configuration>
+            <executions><execution><id>release-javadoc</id><phase>package</phase><goals><goal>jar</goal></goals></execution></executions>
+          </plugin>
+          <plugin>
+            <groupId>org.cyclonedx</groupId>
+            <artifactId>cyclonedx-maven-plugin</artifactId>
+            <version>2.9.1</version>
+            <inherited>false</inherited>
+            <configuration><projectType>library</projectType><schemaVersion>1.6</schemaVersion><includeTestScope>false</includeTestScope><outputFormat>all</outputFormat><outputName>driverkit-sbom</outputName></configuration>
+            <executions><execution><id>release-sbom</id><phase>package</phase><goals><goal>makeAggregateBom</goal></goals></execution></executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.8</version>
+            <configuration><bestPractices>true</bestPractices><passphraseEnvName>MAVEN_GPG_PASSPHRASE</passphraseEnvName><gpgArguments><arg>--pinentry-mode</arg><arg>loopback</arg></gpgArguments></configuration>
+            <executions><execution><id>release-signatures</id><phase>verify</phase><goals><goal>sign</goal></goals></execution></executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile><id>benchmarks</id><modules><module>driverkit-benchmarks</module></modules></profile>
     <profile>
   <id>legacy-drivers</id>
