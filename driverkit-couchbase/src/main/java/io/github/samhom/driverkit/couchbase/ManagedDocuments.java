@@ -1,7 +1,6 @@
 package io.github.samhom.driverkit.couchbase;
 
 import com.couchbase.client.java.Cluster;
-import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.*;
 import io.github.samhom.driverkit.core.*;
 import java.nio.charset.StandardCharsets;
@@ -47,9 +46,15 @@ public final class ManagedDocuments {
                 .async()
                 .get(
                     key,
-                    GetOptions.getOptions().retryStrategy(NO_REPLAY).timeout(context.remaining()))
-                .thenApply(
-                    result -> new Document(result.contentAsObject().toString(), result.cas())));
+                    GetOptions.getOptions()
+                        .transcoder(
+                            new DocumentJson(
+                                Math.min(
+                                    maximum,
+                                    context.settings(CouchbaseSettings.class).maxDocumentBytes())))
+                        .retryStrategy(NO_REPLAY)
+                        .timeout(context.remaining()))
+                .thenApply(DocumentJson::document));
   }
 
   /** Explicit application codecs avoid polymorphic native deserialization. */
@@ -87,13 +92,12 @@ public final class ManagedDocuments {
       String key, String json, com.couchbase.client.core.msg.kv.DurabilityLevel durability) {
     java.util.Objects.requireNonNull(durability);
     key(key);
-    Limits.bytes(json == null ? null : json.getBytes(StandardCharsets.UTF_8), maximum);
-    JsonObject value = JsonObject.fromJson(json);
+    byte[] value = DocumentJson.encodeJson(json, maximum);
     return client.executeAsync(
         Operation.write("upsert", timeout),
         (cluster, context) -> {
           Limits.bytes(
-              json.getBytes(StandardCharsets.UTF_8),
+              value,
               Math.min(maximum, context.settings(CouchbaseSettings.class).maxDocumentBytes()));
           return cluster
               .bucket(bucket)
@@ -104,6 +108,11 @@ public final class ManagedDocuments {
                   key,
                   value,
                   UpsertOptions.upsertOptions()
+                      .transcoder(
+                          new DocumentJson(
+                              Math.min(
+                                  maximum,
+                                  context.settings(CouchbaseSettings.class).maxDocumentBytes())))
                       .durability(durability)
                       .retryStrategy(NO_REPLAY)
                       .timeout(context.remaining()))
@@ -113,13 +122,12 @@ public final class ManagedDocuments {
 
   public CompletableFuture<Long> replaceAsync(String key, String json, long cas) {
     key(key);
-    Limits.bytes(json == null ? null : json.getBytes(StandardCharsets.UTF_8), maximum);
-    JsonObject value = JsonObject.fromJson(json);
+    byte[] value = DocumentJson.encodeJson(json, maximum);
     return client.executeAsync(
         Operation.write("replace", timeout),
         (cluster, context) -> {
           Limits.bytes(
-              json.getBytes(StandardCharsets.UTF_8),
+              value,
               Math.min(maximum, context.settings(CouchbaseSettings.class).maxDocumentBytes()));
           return cluster
               .bucket(bucket)
@@ -130,6 +138,11 @@ public final class ManagedDocuments {
                   key,
                   value,
                   ReplaceOptions.replaceOptions()
+                      .transcoder(
+                          new DocumentJson(
+                              Math.min(
+                                  maximum,
+                                  context.settings(CouchbaseSettings.class).maxDocumentBytes())))
                       .retryStrategy(NO_REPLAY)
                       .cas(cas)
                       .timeout(context.remaining()))
@@ -179,8 +192,7 @@ public final class ManagedDocuments {
     java.util.List<MutateInSpec> specs = new java.util.ArrayList<>();
     for (var entry : copy.entrySet()) {
       path(entry.getKey());
-      byte[] encoded = entry.getValue().getBytes(StandardCharsets.UTF_8);
-      Limits.bytes(encoded, maximum);
+      byte[] encoded = DocumentJson.encodeJson(entry.getValue(), maximum);
       bytes += encoded.length;
       if (bytes > maximum) throw new IllegalArgumentException("Subdocument byte budget exceeded");
       var parsed = com.couchbase.client.java.json.JsonArray.fromJson("[" + entry.getValue() + "]");
