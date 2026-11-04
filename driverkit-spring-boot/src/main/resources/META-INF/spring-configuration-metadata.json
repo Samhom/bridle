@@ -1,0 +1,145 @@
+{
+  "groups": [
+    {
+      "name": "driverkit",
+      "type": "io.github.samhom.driverkit.spring.DriverKitProperties"
+    },
+    {
+      "name": "driverkit.resources",
+      "type": "java.util.Map"
+    }
+  ],
+  "properties": [
+    {
+      "name": "driverkit.application",
+      "type": "java.lang.String",
+      "defaultValue": "application",
+      "description": "DriverKit application."
+    },
+    {
+      "name": "driverkit.environment",
+      "type": "java.lang.String",
+      "defaultValue": "default",
+      "description": "DriverKit environment."
+    },
+    {
+      "name": "driverkit.max-clients",
+      "type": "java.lang.Integer",
+      "defaultValue": 128,
+      "description": "DriverKit max clients."
+    },
+    {
+      "name": "driverkit.call-threads",
+      "type": "java.lang.Integer",
+      "defaultValue": 16,
+      "description": "DriverKit call threads."
+    },
+    {
+      "name": "driverkit.queued-calls",
+      "type": "java.lang.Integer",
+      "defaultValue": 256,
+      "description": "DriverKit queued calls."
+    },
+    {
+      "name": "driverkit.health-enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "DriverKit health enabled."
+    },
+    {
+      "name": "driverkit.resources.*.driver",
+      "type": "io.github.samhom.driverkit.spring.ResourceProperties$Driver",
+      "description": "Trusted resource driver."
+    },
+    {
+      "name": "driverkit.resources.*.host",
+      "type": "java.lang.String",
+      "description": "Trusted resource host."
+    },
+    {
+      "name": "driverkit.resources.*.port",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource port."
+    },
+    {
+      "name": "driverkit.resources.*.tls",
+      "type": "java.lang.Boolean",
+      "description": "Trusted resource tls."
+    },
+    {
+      "name": "driverkit.resources.*.credentials-bean",
+      "type": "java.lang.String",
+      "description": "Trusted resource credentials bean."
+    },
+    {
+      "name": "driverkit.resources.*.max-in-flight",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max in flight."
+    },
+    {
+      "name": "driverkit.resources.*.connect-timeout",
+      "type": "java.time.Duration",
+      "description": "Trusted resource connect timeout."
+    },
+    {
+      "name": "driverkit.resources.*.operation-timeout",
+      "type": "java.time.Duration",
+      "description": "Trusted resource operation timeout."
+    },
+    {
+      "name": "driverkit.resources.*.shutdown-timeout",
+      "type": "java.time.Duration",
+      "description": "Trusted resource shutdown timeout."
+    },
+    {
+      "name": "driverkit.resources.*.max-connections",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max connections."
+    },
+    {
+      "name": "driverkit.resources.*.database",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource database."
+    },
+    {
+      "name": "driverkit.resources.*.max-payload-bytes",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max payload bytes."
+    },
+    {
+      "name": "driverkit.resources.*.max-batch-items",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max batch items."
+    },
+    {
+      "name": "driverkit.resources.*.bucket",
+      "type": "java.lang.String",
+      "description": "Trusted resource bucket."
+    },
+    {
+      "name": "driverkit.resources.*.scope",
+      "type": "java.lang.String",
+      "description": "Trusted resource scope."
+    },
+    {
+      "name": "driverkit.resources.*.collection",
+      "type": "java.lang.String",
+      "description": "Trusted resource collection."
+    },
+    {
+      "name": "driverkit.resources.*.group",
+      "type": "java.lang.String",
+      "description": "Trusted resource group."
+    },
+    {
+      "name": "driverkit.resources.*.topic",
+      "type": "java.lang.String",
+      "description": "Trusted resource topic."
+    },
+    {
+      "name": "driverkit.resources.*.consumer-threads",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource consumer threads."
+    }
+  ]
+}

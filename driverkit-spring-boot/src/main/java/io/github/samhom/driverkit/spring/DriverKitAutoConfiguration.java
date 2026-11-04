@@ -11,6 +11,16 @@ import org.springframework.context.annotation.Bean;
 @EnableConfigurationProperties(DriverKitProperties.class)
 public class DriverKitAutoConfiguration {
   @Bean(destroyMethod = "close")
+  @ConditionalOnMissingBean(DriverKitResources.class)
+  public DriverKitResources driverKitResources(
+      ClientRuntime runtime,
+      DriverKitProperties properties,
+      ObjectProvider<ResourceFactory<?, ?>> factories,
+      org.springframework.beans.factory.BeanFactory beans) {
+    return new DriverKitResources(runtime, properties, factories.orderedStream().toList(), beans);
+  }
+
+  @Bean(destroyMethod = "close")
   @ConditionalOnMissingBean(ClientRuntime.class)
   public ClientRuntime driverKitRuntime(
       DriverKitProperties properties,
