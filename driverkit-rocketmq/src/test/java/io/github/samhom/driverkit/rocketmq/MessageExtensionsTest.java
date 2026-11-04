@@ -96,6 +96,94 @@ class MessageExtensionsTest {
   }
 
   @Test
+  void transactionSendRetainsLocalDecisionButRejectsNonFinalBrokerStatus() {
+    class TransactionProducer extends TransactionMQProducer {
+      SendStatus status = SendStatus.SEND_OK;
+      LocalTransactionState decision = LocalTransactionState.UNKNOW;
+      boolean missingResult;
+      int sends;
+
+      @Override
+      public TransactionSendResult sendMessageInTransaction(Message message, Object argument) {
+        sends++;
+        if (missingResult) return null;
+        TransactionSendResult result = new TransactionSendResult();
+        result.setSendStatus(status);
+        result.setLocalTransactionState(decision);
+        return result;
+      }
+    }
+    TransactionProducer nativeClient = new TransactionProducer();
+    try (ClientRuntime runtime = new ClientRuntime()) {
+      var handle =
+          runtime.register(
+              new ConfigSnapshot<>(new ResourceId("test", "test", "transaction"), 1, settings()),
+              new FactoryAdapter<DefaultMQProducer, RocketMqSettings>(
+                  "fixture", value -> nativeClient, (client, timeout) -> {}, client -> {}),
+              ClientPolicy.defaults());
+      ManagedProducer producer = new ManagedProducer(handle, Duration.ofSeconds(2));
+      for (LocalTransactionState decision : LocalTransactionState.values()) {
+        nativeClient.decision = decision;
+        assertEquals(
+            decision,
+            producer.sendTransaction(new byte[] {1}, "id", null).getLocalTransactionState());
+      }
+      int before = nativeClient.sends;
+      for (SendStatus status :
+          List.of(
+              SendStatus.FLUSH_DISK_TIMEOUT,
+              SendStatus.FLUSH_SLAVE_TIMEOUT,
+              SendStatus.SLAVE_NOT_AVAILABLE)) {
+        nativeClient.status = status;
+        ClientException error =
+            assertThrows(
+                ClientException.class, () -> producer.sendTransaction(new byte[] {1}, "id", null));
+        assertEquals(ClientException.Kind.WRITE_OUTCOME_UNKNOWN, error.kind());
+      }
+      nativeClient.missingResult = true;
+      assertEquals(
+          ClientException.Kind.WRITE_OUTCOME_UNKNOWN,
+          assertThrows(
+                  ClientException.class, () -> producer.sendTransaction(new byte[] {1}, "id", null))
+              .kind());
+      assertEquals(before + 4, nativeClient.sends);
+    }
+  }
+
+  @Test
+  void rebalanceObserverCannotMutateNativeQueueIdentities() throws Exception {
+    AtomicInteger observations = new AtomicInteger();
+    var adapter =
+        new RocketMqConsumerAdapter(
+            (messages, context) -> ConsumeConcurrentlyStatus.CONSUME_SUCCESS,
+            ConsumerOptions.defaults(),
+            (topic, all, assigned) -> {
+              observations.incrementAndGet();
+              assertThrows(UnsupportedOperationException.class, all::clear);
+              all.iterator().next().setQueueId(99);
+              assigned.iterator().next().setBrokerName("changed");
+            });
+    DeliveryGuard closed =
+        new DeliveryGuard() {
+          public <T> T invoke(Callable<T> handler, T retry) {
+            return retry;
+          }
+        };
+    var consumer = adapter.createConsumer(settings(), closed);
+    try {
+      MessageQueue original = new MessageQueue("events", "broker", 1);
+      Set<MessageQueue> nativeQueues = new HashSet<>(Set.of(original));
+      consumer.getMessageQueueListener().messageQueueChanged("events", nativeQueues, nativeQueues);
+      assertEquals(1, observations.get());
+      assertEquals(1, original.getQueueId());
+      assertEquals("broker", original.getBrokerName());
+      assertTrue(nativeQueues.contains(new MessageQueue("events", "broker", 1)));
+    } finally {
+      consumer.shutdown();
+    }
+  }
+
+  @Test
   void orderedConsumerGuardPreventsAckAfterAdmissionCloses() throws Exception {
     AtomicBoolean open = new AtomicBoolean(true);
     AtomicInteger deliveries = new AtomicInteger();

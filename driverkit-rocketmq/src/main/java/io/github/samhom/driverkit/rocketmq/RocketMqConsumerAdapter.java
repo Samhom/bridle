@@ -95,8 +95,7 @@ public final class RocketMqConsumerAdapter
       consumer.setMessageQueueListener(
           (topic, all, assigned) -> {
             try {
-              rebalance.messageQueueChanged(
-                  topic, java.util.Set.copyOf(all), java.util.Set.copyOf(assigned));
+              rebalance.messageQueueChanged(topic, queueSnapshot(all), queueSnapshot(assigned));
             } catch (RuntimeException ignored) {
               /* observational callback must not stop native rebalancing */
             }
@@ -132,6 +131,16 @@ public final class RocketMqConsumerAdapter
                       },
                       ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT));
     return consumer;
+  }
+
+  private static java.util.Set<org.apache.rocketmq.common.message.MessageQueue> queueSnapshot(
+      java.util.Set<org.apache.rocketmq.common.message.MessageQueue> queues) {
+    java.util.Set<org.apache.rocketmq.common.message.MessageQueue> copy = new java.util.HashSet<>();
+    for (var queue : queues)
+      copy.add(
+          new org.apache.rocketmq.common.message.MessageQueue(
+              queue.getTopic(), queue.getBrokerName(), queue.getQueueId()));
+    return java.util.Set.copyOf(copy);
   }
 
   @Override

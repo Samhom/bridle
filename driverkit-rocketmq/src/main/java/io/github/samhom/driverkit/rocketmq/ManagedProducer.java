@@ -123,8 +123,14 @@ public final class ManagedProducer {
             throw new IllegalStateException(
                 "Register a transaction-enabled producer adapter first");
           context.checkDeadline();
-          return transactional.sendMessageInTransaction(
-              message(value, context.settings(RocketMqSettings.class)), argument);
+          TransactionSendResult result =
+              transactional.sendMessageInTransaction(
+                  message(value, context.settings(RocketMqSettings.class)), argument);
+          if (result == null || result.getSendStatus() != SendStatus.SEND_OK)
+            throw new ClientException(
+                ClientException.Kind.WRITE_OUTCOME_UNKNOWN,
+                "Broker returned a non-final transaction send status");
+          return result;
         });
   }
 
