@@ -190,10 +190,14 @@ public final class ManagedSearch {
     Limits.timeout(keepAlive);
     if (keepAlive.compareTo(Duration.ofMinutes(1)) > 0)
       throw new IllegalArgumentException("PIT keep-alive exceeds one minute");
-    ClientSession<ElasticsearchClient> lease=client.session();
+    ClientSession<ElasticsearchClient> lease = client.session();
     PitOwnership ownership;
-    try {ownership=new PitOwnership(lease,keepAlive);}
-    catch(RuntimeException|Error failure){lease.close();throw failure;}
+    try {
+      ownership = new PitOwnership(lease, keepAlive);
+    } catch (RuntimeException | Error failure) {
+      lease.close();
+      throw failure;
+    }
     try {
       client.executeAwait(
           ownership.lease,

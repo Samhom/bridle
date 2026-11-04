@@ -25,11 +25,11 @@ one borrowed connection for MULTI/EXEC; false uses a single bounded pipeline. Na
 escape. Scripts must be trusted deployment assets, not end-user input. No write is retried by DriverKit.
 `RedisTopologyAdapter` supports native RedisSentinelClient and RedisClusterClient under ManagedClient
 ownership. Seeds and discovered infrastructure must be trusted. TLS hostname verification remains on.
-Cluster uses one native attempt, intentionally failing fast on redirection/connection failure instead of
-risking blind mutation replay. Reissue only after examining outcome/idempotency. Pool limits are per
-native node, not a global cluster connection quota. Sentinel credentials use a separate provider;
-rotate that provider through a configuration revision. Topology adapters are compile-verified;
-Sentinel failover / ASK-MOVED recovery still require real-cluster validation.
+ManagedTopologyRedis now allows bounded explicit MOVED/ASK routing while blocking connection-error
+replay after dispatch, and applies per-call pool/socket budgets. See REDIS_TOPOLOGY.md for the pinned
+Jedis evidence, precise managed facade scope, independent Sentinel credential gate and test boundaries.
+Native escape APIs retain configuration ceilings rather than per-call physical deadline guarantees.
+Sentinel failover in a real broker deployment still requires acceptance validation.
 
 ## 24: Elasticsearch
 
