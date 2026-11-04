@@ -167,6 +167,7 @@
     </plugins>
   </build>
   <profiles>
+    <profile><id>benchmarks</id><modules><module>driverkit-benchmarks</module></modules></profile>
     <profile>
   <id>legacy-drivers</id>
   <modules>

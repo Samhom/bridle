@@ -1,0 +1,65 @@
+{
+  "scope": "single-fork synthetic governance baseline, not a capacity claim",
+  "source_commit": "6d68504 + item28 working tree",
+  "java": "OpenJDK 17.0.12",
+  "os": "Windows",
+  "architecture": "AMD64",
+  "logical_processors": 16,
+  "operations": 10000,
+  "warmup": 2000,
+  "concurrency": 4,
+  "rows": [
+    {
+      "mode": "native",
+      "workload": "synthetic",
+      "operations": 10000,
+      "concurrency": 4,
+      "ops_per_second": 4602356.41,
+      "p99_nanos": 1300,
+      "allocated_bytes_lower_bound": 323352,
+      "live_threads": 12
+    },
+    {
+      "mode": "core",
+      "workload": "synthetic",
+      "operations": 10000,
+      "concurrency": 4,
+      "ops_per_second": 48074.77,
+      "p99_nanos": 314900,
+      "allocated_bytes_lower_bound": 16321536,
+      "live_threads": 21
+    },
+    {
+      "mode": "metrics",
+      "workload": "synthetic",
+      "operations": 10000,
+      "concurrency": 4,
+      "ops_per_second": 50010.13,
+      "p99_nanos": 150000,
+      "allocated_bytes_lower_bound": 27256144,
+      "live_threads": 21
+    },
+    {
+      "mode": "trace",
+      "workload": "synthetic",
+      "operations": 10000,
+      "concurrency": 4,
+      "ops_per_second": 49058.35,
+      "p99_nanos": 140900,
+      "allocated_bytes_lower_bound": 32323952,
+      "live_threads": 21
+    },
+    {
+      "scenario": "slow-resource",
+      "isolated": false,
+      "fast_completed_within_100ms": false,
+      "observed_nanos": 105440900
+    },
+    {
+      "scenario": "slow-resource",
+      "isolated": true,
+      "fast_completed_within_100ms": true,
+      "observed_nanos": 934300
+    }
+  ]
+}
