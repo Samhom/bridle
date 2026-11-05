@@ -39,9 +39,6 @@ final class TopologyCallBudget {
     Supplier<Duration> budget = CURRENT.get();
     long nanos = configured.toNanos();
     if (budget != null) nanos = Math.min(nanos, budget.get().toNanos());
-    if (nanos <= 0)
-      throw new ClientException(
-          ClientException.Kind.TIMEOUT, "Topology operation deadline exceeded");
-    return (int) Math.max(1, Math.min(Integer.MAX_VALUE, (nanos + 999999) / 1000000));
+    return CallContext.millisWithin(nanos);
   }
 }

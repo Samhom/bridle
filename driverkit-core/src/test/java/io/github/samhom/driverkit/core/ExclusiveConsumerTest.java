@@ -115,6 +115,22 @@ class ExclusiveConsumerTest {
   }
 
   @Test
+  void interruptedDeliveryRestoresTheFlagAndReturnsRetry() {
+    Adapter adapter = new Adapter();
+    try (ExclusiveConsumer<String, String> consumer =
+        new ExclusiveConsumer<>(snapshot(1, "one"), adapter, policy(), Observer.NOOP)) {
+      assertEquals(
+          "retry",
+          adapter.guard.invoke(
+              () -> {
+                throw new InterruptedException("stop");
+              },
+              "retry"));
+      assertTrue(Thread.interrupted());
+    }
+  }
+
+  @Test
   void callbacksProduceRetryOnExceptionAndAfterRevocation() {
     Adapter adapter = new Adapter();
     List<Observation.Outcome> outcomes = new ArrayList<>();

@@ -131,12 +131,12 @@ public final class ManagedRedis {
                   if (transaction) {
                     try (redis.clients.jedis.Transaction tx = jedis.multi()) {
                       copy.forEach(tx::set);
-                      return tx.exec();
+                      return BatchOutcomes.transaction(tx.exec());
                     }
                   }
                   try (redis.clients.jedis.Pipeline pipeline = jedis.pipelined()) {
                     copy.forEach(pipeline::set);
-                    return pipeline.syncAndReturnAll();
+                    return BatchOutcomes.pipeline(pipeline.syncAndReturnAll());
                   }
                 }));
   }

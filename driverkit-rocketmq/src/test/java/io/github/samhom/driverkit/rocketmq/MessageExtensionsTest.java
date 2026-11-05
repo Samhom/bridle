@@ -225,4 +225,52 @@ class MessageExtensionsTest {
       consumer.shutdown();
     }
   }
+
+  @Test
+  void nullRebalanceQueuesStayEmptyAndABatchIsNotAckedAsOneDecision() throws Exception {
+    AtomicInteger observations = new AtomicInteger();
+    AtomicInteger deliveries = new AtomicInteger();
+    var adapter =
+        new RocketMqConsumerAdapter(
+            (messages, context) -> {
+              deliveries.incrementAndGet();
+              return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            },
+            ConsumerOptions.defaults(),
+            (topic, all, assigned) -> {
+              assertTrue(all.isEmpty());
+              assertTrue(assigned.isEmpty());
+              observations.incrementAndGet();
+            });
+    DeliveryGuard open =
+        new DeliveryGuard() {
+          public <T> T invoke(Callable<T> handler, T retry) {
+            try {
+              return handler.call();
+            } catch (Exception failure) {
+              return retry;
+            }
+          }
+        };
+    var consumer = adapter.createConsumer(settings(), open);
+    try {
+      consumer.getMessageQueueListener().messageQueueChanged("events", null, null);
+      assertEquals(1, observations.get());
+      var listener = (MessageListenerConcurrently) consumer.getMessageListener();
+      MessageExt message = new MessageExt();
+      message.setTopic("events");
+      message.setBody(new byte[] {1});
+      assertEquals(
+          ConsumeConcurrentlyStatus.RECONSUME_LATER, listener.consumeMessage(null, null));
+      assertEquals(
+          ConsumeConcurrentlyStatus.RECONSUME_LATER,
+          listener.consumeMessage(List.of(message, message), null));
+      assertEquals(0, deliveries.get());
+      assertEquals(
+          ConsumeConcurrentlyStatus.CONSUME_SUCCESS, listener.consumeMessage(List.of(message), null));
+      assertEquals(1, deliveries.get());
+    } finally {
+      consumer.shutdown();
+    }
+  }
 }

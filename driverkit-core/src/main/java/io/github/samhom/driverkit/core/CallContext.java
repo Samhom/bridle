@@ -59,11 +59,23 @@ public final class CallContext {
     return Duration.ofNanos(Math.max(0, deadline - System.nanoTime()));
   }
 
-  /** Positive milliseconds for native APIs; zero must never become an infinite native timeout. */
+  /**
+   * Positive milliseconds for native APIs that cannot express a shorter unit. The result is never
+   * rounded up: a sub-millisecond remainder cannot be handed to a socket as one extra millisecond,
+   * and zero is never converted into an infinite native timeout.
+   */
   public int remainingMillis(Duration ceiling) {
     checkDeadline();
     long nanos = Math.min(remaining().toNanos(), Limits.timeout(ceiling).toNanos());
-    return (int) Math.max(1, Math.min(Integer.MAX_VALUE, (nanos + 999999) / 1000000));
+    return millisWithin(nanos);
+  }
+
+  /** Floor of a remaining nanosecond budget. Exposed so other modules share one conversion. */
+  public static int millisWithin(long remainingNanos) {
+    if (remainingNanos < 1_000_000L)
+      throw new ClientException(ClientException.Kind.TIMEOUT, "Operation deadline exceeded");
+    long millis = remainingNanos / 1_000_000L;
+    return millis > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) millis;
   }
 
   public void checkDeadline() {

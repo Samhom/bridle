@@ -34,6 +34,11 @@ public final class ManagedDocuments {
       throw new IllegalArgumentException("Invalid document key size");
   }
 
+  /** Millisecond floor of the call deadline. A shorter Duration would still be sent, then time out after dispatch. */
+  private Duration nativeTimeout(CallContext context) {
+    return Duration.ofMillis(context.remainingMillis(timeout));
+  }
+
   public CompletableFuture<Document> getAsync(String key) {
     key(key);
     return client.executeAsync(
@@ -53,7 +58,7 @@ public final class ManagedDocuments {
                                     maximum,
                                     context.settings(CouchbaseSettings.class).maxDocumentBytes())))
                         .retryStrategy(NO_REPLAY)
-                        .timeout(context.remaining()))
+                        .timeout(nativeTimeout(context)))
                 .thenApply(DocumentJson::document));
   }
 
@@ -115,7 +120,7 @@ public final class ManagedDocuments {
                                   context.settings(CouchbaseSettings.class).maxDocumentBytes())))
                       .durability(durability)
                       .retryStrategy(NO_REPLAY)
-                      .timeout(context.remaining()))
+                      .timeout(nativeTimeout(context)))
               .thenApply(MutationResult::cas);
         });
   }
@@ -145,7 +150,7 @@ public final class ManagedDocuments {
                                   context.settings(CouchbaseSettings.class).maxDocumentBytes())))
                       .retryStrategy(NO_REPLAY)
                       .cas(cas)
-                      .timeout(context.remaining()))
+                      .timeout(nativeTimeout(context)))
               .thenApply(MutationResult::cas);
         });
   }
@@ -175,7 +180,7 @@ public final class ManagedDocuments {
                     specs,
                     LookupInOptions.lookupInOptions()
                         .retryStrategy(NO_REPLAY)
-                        .timeout(context.remaining())));
+                        .timeout(nativeTimeout(context))));
   }
 
   /** Bounded JSON subdocument upserts, with optional CAS and server-side durability. */
@@ -214,7 +219,7 @@ public final class ManagedDocuments {
                       .cas(cas)
                       .durability(durability)
                       .retryStrategy(NO_REPLAY)
-                      .timeout(context.remaining()));
+                      .timeout(nativeTimeout(context)));
         });
   }
 
@@ -240,7 +245,7 @@ public final class ManagedDocuments {
                     com.couchbase.client.java.transactions.config.TransactionOptions
                         .transactionOptions()
                         .durabilityLevel(durability)
-                        .timeout(context.remaining())));
+                        .timeout(nativeTimeout(context))));
   }
 
   public ManagedClient<Cluster, CouchbaseSettings> handle() {

@@ -82,6 +82,10 @@ public final class ExclusiveConsumer<C, S> implements AutoCloseable {
               return retryResult;
             }
             return result;
+          } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            outcome = Observation.Outcome.ERROR;
+            return retryResult;
           } catch (Exception ignored) {
             outcome = Observation.Outcome.ERROR;
             return retryResult;

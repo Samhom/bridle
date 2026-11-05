@@ -128,4 +128,13 @@ class ResourceIsolationTest {
     late.complete(new ClientException(ClientException.Kind.UNAVAILABLE, "fixture"));
     assertEquals(CircuitStatus.State.CLOSED, breaker.status().state());
   }
+
+  @Test
+  void ambiguousWriteDoesNotOpenTheCircuit() {
+    CircuitBreaker breaker =
+        new CircuitBreaker(ExecutionPolicy.shared().withCircuitBreaker(1, SECOND), () -> 0);
+    breaker.acquire().complete(new ClientException(ClientException.Kind.WRITE_OUTCOME_UNKNOWN, "fixture"));
+    assertEquals(CircuitStatus.State.CLOSED, breaker.status().state());
+    assertDoesNotThrow(breaker::acquire);
+  }
 }

@@ -79,12 +79,13 @@ final class CircuitBreaker {
             error instanceof ClientException
                 ? ((ClientException) error).kind()
                 : ClientException.Kind.DRIVER_FAILURE;
+        // An ambiguous write is not evidence the dependency is down. Opening the circuit on it
+        // would shed later reads after a mutation that may already have committed.
         boolean transientFailure =
             kind == ClientException.Kind.TIMEOUT
                 || kind == ClientException.Kind.UNAVAILABLE
                 || kind == ClientException.Kind.CONNECTION_FAILURE
                 || kind == ClientException.Kind.DRIVER_FAILURE
-                || kind == ClientException.Kind.WRITE_OUTCOME_UNKNOWN
                 || kind == ClientException.Kind.RATE_LIMITED
                 || kind == ClientException.Kind.SERVER_REJECTED;
         if (!transientFailure) {

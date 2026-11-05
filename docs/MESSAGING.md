@@ -18,7 +18,10 @@ managed deadline returns an unknown write outcome while the physical lease remai
 completion. SDK cancellation is not a rollback request. Broker transaction checks can outlive callers.
 
 RocketMqConsumerAdapter.ordered registers a native orderly listener through the same DeliveryGuard as
-concurrent handlers. ConsumerOptions selects bounded retry attempts and first/last offset only when
+concurrent handlers. Both listeners accept exactly one message: RocketMQ applies one status to the
+whole callback list, so a larger batch is asked to retry and is not shown to application code.
+A null rebalance assignment is an empty snapshot, not a crash. An interrupted handler restores the
+interrupt flag and still returns the retry status. ConsumerOptions selects bounded retry attempts and first/last offset only when
 there is no committed group offset. Reconfiguration does not reset existing offsets. Native balancing,
 ACK/retry, offset commit/recovery and retry-to-DLQ transitions stay with RocketMQ. Rebalance observers
 must return promptly and cannot change assignments. A bounded shutdown drains admitted handlers before

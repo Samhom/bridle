@@ -158,12 +158,23 @@ public final class ManagedSearch {
 
   private <T> AsyncCall<ElasticsearchClient, SearchResponse<T>> searchCall(
       SearchRequest request, Class<T> type) {
+    validateSearch(request);
+    return (nativeClient, context) -> async(nativeClient, context).search(request, type);
+  }
+
+  /**
+   * Scroll keeps server state this facade does not pin to a generation. A non-zero {@code from}
+   * makes the coordinating node materialize every skipped hit. New pagination uses PIT pages.
+   */
+  static void validateSearch(SearchRequest request) {
     if (request == null
+        || request.scroll() != null
+        || (request.from() != null && request.from() != 0)
         || request.searchAfter().size() > 32
         || request.sort().size() > 32
         || (request.size() != null && (request.size() < 0 || request.size() > 10000)))
-      throw new IllegalArgumentException("Search size out of bounds");
-    return (nativeClient, context) -> async(nativeClient, context).search(request, type);
+      throw new IllegalArgumentException(
+          "Search rejects scroll and deep from; use a bounded PIT page");
   }
 
   /**

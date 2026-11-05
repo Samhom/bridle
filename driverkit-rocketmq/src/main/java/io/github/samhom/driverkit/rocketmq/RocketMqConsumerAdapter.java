@@ -108,11 +108,14 @@ public final class RocketMqConsumerAdapter
               (messages, context) ->
                   guard.invoke(
                       () -> {
-                        for (org.apache.rocketmq.common.message.MessageExt message : messages) {
-                          if (!settings.topic().equals(message.getTopic()))
-                            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-                          Limits.bytes(message.getBody(), settings.maxMessageBytes());
-                        }
+                        // Native ack is one status for the whole list. A larger list would apply
+                        // one decision to messages the handler did not see.
+                        if (messages == null || messages.size() != 1)
+                          return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                        org.apache.rocketmq.common.message.MessageExt message = messages.get(0);
+                        if (message == null || !settings.topic().equals(message.getTopic()))
+                          return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                        Limits.bytes(message.getBody(), settings.maxMessageBytes());
                         return Objects.requireNonNull(handler.consumeMessage(messages, context));
                       },
                       ConsumeConcurrentlyStatus.RECONSUME_LATER));
@@ -122,11 +125,12 @@ public final class RocketMqConsumerAdapter
               (messages, context) ->
                   guard.invoke(
                       () -> {
-                        for (var message : messages) {
-                          if (!settings.topic().equals(message.getTopic()))
-                            return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
-                          Limits.bytes(message.getBody(), settings.maxMessageBytes());
-                        }
+                        if (messages == null || messages.size() != 1)
+                          return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                        var message = messages.get(0);
+                        if (message == null || !settings.topic().equals(message.getTopic()))
+                          return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                        Limits.bytes(message.getBody(), settings.maxMessageBytes());
                         return Objects.requireNonNull(ordered.consumeMessage(messages, context));
                       },
                       ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT));
@@ -135,11 +139,14 @@ public final class RocketMqConsumerAdapter
 
   private static java.util.Set<org.apache.rocketmq.common.message.MessageQueue> queueSnapshot(
       java.util.Set<org.apache.rocketmq.common.message.MessageQueue> queues) {
+    if (queues == null || queues.isEmpty()) return java.util.Set.of();
     java.util.Set<org.apache.rocketmq.common.message.MessageQueue> copy = new java.util.HashSet<>();
-    for (var queue : queues)
+    for (var queue : queues) {
+      if (queue == null) continue;
       copy.add(
           new org.apache.rocketmq.common.message.MessageQueue(
               queue.getTopic(), queue.getBrokerName(), queue.getQueueId()));
+    }
     return java.util.Set.copyOf(copy);
   }
 

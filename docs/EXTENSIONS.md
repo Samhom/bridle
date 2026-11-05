@@ -21,8 +21,10 @@ exception or user-supplied message is retained. The buffer is diagnostic, not a 
 ## 23: Redis
 
 `ManagedRedis.getAll`, `eval` and `setBatch` cap command counts and write sizes. `setBatch(...,true)` uses
-one borrowed connection for MULTI/EXEC; false uses a single bounded pipeline. Native objects do not
-escape. Scripts must be trusted deployment assets, not end-user input. No write is retried by DriverKit.
+one borrowed connection for MULTI/EXEC; false uses a single bounded pipeline. A null EXEC is a
+discarded transaction (nothing applied). A pipeline element that is an exception means an unknown
+prefix may already have been applied, so the call is WRITE_OUTCOME_UNKNOWN and is not retried.
+Native objects do not escape. Scripts must be trusted deployment assets, not end-user input. No write is retried by DriverKit.
 `RedisTopologyAdapter` supports native RedisSentinelClient and RedisClusterClient under ManagedClient
 ownership. Seeds and discovered infrastructure must be trusted. TLS hostname verification remains on.
 ManagedTopologyRedis now allows bounded explicit MOVED/ASK routing while blocking connection-error
