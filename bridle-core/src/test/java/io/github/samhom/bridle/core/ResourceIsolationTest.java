@@ -139,4 +139,57 @@ class ResourceIsolationTest {
     assertEquals(CircuitStatus.State.CLOSED, breaker.status().state());
     assertDoesNotThrow(breaker::acquire);
   }
+
+  @Test
+  void alternatingOutcomesOpenWhenTheWindowIsHalfFailed() {
+    CircuitBreaker breaker =
+        new CircuitBreaker(ExecutionPolicy.shared().withCircuitBreaker(2, SECOND), () -> 0);
+    breaker.acquire().complete(unavailable());
+    breaker.acquire().complete(null);
+    breaker.acquire().complete(unavailable());
+    assertEquals(CircuitStatus.State.CLOSED, breaker.status().state());
+    breaker.acquire().complete(null);
+    assertEquals(CircuitStatus.State.OPEN, breaker.status().state());
+  }
+
+  @Test
+  void halfOpenSampleStaysCappedUntilEveryProbeIsDecided() {
+    AtomicLong time = new AtomicLong();
+    CircuitBreaker breaker =
+        new CircuitBreaker(ExecutionPolicy.shared().withCircuitBreaker(2, SECOND), time::get);
+    breaker.acquire().complete(unavailable());
+    breaker.acquire().complete(unavailable());
+    assertEquals(CircuitStatus.State.OPEN, breaker.status().state());
+    time.addAndGet(SECOND.toNanos());
+    CircuitBreaker.Permit first = breaker.acquire();
+    CircuitBreaker.Permit second = breaker.acquire();
+    assertThrows(ClientException.class, breaker::acquire);
+    first.complete(null);
+    assertEquals(CircuitStatus.State.HALF_OPEN, breaker.status().state());
+    second.complete(unavailable());
+    assertEquals(CircuitStatus.State.OPEN, breaker.status().state());
+  }
+
+  @Test
+  void slowSuccessIsARecordedFailure() {
+    AtomicLong time = new AtomicLong();
+    CircuitBreaker breaker =
+        new CircuitBreaker(
+            ExecutionPolicy.shared()
+                .withCircuitBreaker(2, SECOND)
+                .withSlowCallThreshold(Duration.ofMillis(50)),
+            time::get);
+    CircuitBreaker.Permit first = breaker.acquire();
+    time.addAndGet(Duration.ofMillis(50).toNanos());
+    first.complete(null);
+    assertEquals(CircuitStatus.State.CLOSED, breaker.status().state());
+    CircuitBreaker.Permit second = breaker.acquire();
+    time.addAndGet(Duration.ofMillis(50).toNanos());
+    second.complete(null);
+    assertEquals(CircuitStatus.State.OPEN, breaker.status().state());
+  }
+
+  private static ClientException unavailable() {
+    return new ClientException(ClientException.Kind.UNAVAILABLE, "fixture");
+  }
 }
