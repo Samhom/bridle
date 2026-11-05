@@ -1,4 +1,4 @@
-import io.github.samhom.driverkit.core.*;
+import io.github.samhom.bridle.core.*;
 import java.time.Duration;
 import java.nio.file.Path;
 import java.util.*;
@@ -14,7 +14,7 @@ public final class Consumer {
     try{Class.forName(name);throw new AssertionError("Unexpected optional dependency: "+name);}catch(ClassNotFoundException expected){}
   }
   static void core() throws Exception {
-    origin(ClientRuntime.class,"driverkit-core");
+    origin(ClientRuntime.class,"bridle-core");
     try(ClientRuntime runtime=new ClientRuntime()) {
       var handle=runtime.register(new ConfigSnapshot<>(new ResourceId("consumer","test","resource"),1,"fixture"),
         new FactoryAdapter<String,String>("fixture",v->v,(v,t)->{},v->{}),ClientPolicy.defaults());
@@ -22,9 +22,9 @@ public final class Consumer {
     }
   }
   public static void main(String[] args) throws Exception {
-    version=args[0];core();origin(io.github.samhom.driverkit.redis.JedisAdapter.class,"driverkit-redis-jedis");
-    var settings=io.github.samhom.driverkit.redis.RedisSettings.defaults(new Endpoint("localhost",6379,false),()->new Credentials("fixture",new char[0]));
-    try(var nativeClient=new io.github.samhom.driverkit.redis.JedisAdapter().create(settings)) {
+    version=args[0];core();origin(io.github.samhom.bridle.redis.JedisAdapter.class,"bridle-redis");
+    var settings=io.github.samhom.bridle.redis.RedisSettings.defaults(new Endpoint("localhost",6379,false),()->new Credentials("fixture",new char[0]));
+    try(var nativeClient=new io.github.samhom.bridle.redis.JedisAdapter().create(settings)) {
       check(nativeClient.getClass()==redis.clients.jedis.RedisClient.class,"Wrong modern Jedis client");
       check(nativeClient.getPool()!=null,"Connection pool missing");
     }

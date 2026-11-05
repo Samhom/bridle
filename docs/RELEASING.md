@@ -32,7 +32,7 @@ Publishing to a package registry is a separate authorized action, not an implici
 With JDK 17+, preview the artifacts without a release key:
 
 ```
-mvn -B -ntp -s .mvn/settings.xml -Prelease -pl driverkit-core -am -DskipTests -Dgpg.skip=true verify
+mvn -B -ntp -s .mvn/settings.xml -Prelease -pl bridle-core -am -DskipTests -Dgpg.skip=true verify
 ```
 
 This validates source/Javadoc/SBOM generation only. It does not validate signing or constitute a release.
@@ -43,13 +43,13 @@ A real release uses the whole default reactor and never sets gpg.skip.
 ## API compatibility gate
 
 ```
-python tools/api_compatibility.py --jar driverkit-core/target/driverkit-core-0.1.0-SNAPSHOT.jar --baseline api/core-development.json
+python tools/api_compatibility.py --jar bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar --baseline api/core-development.json
 python -m unittest discover -s tools -p test_api_compatibility.py
 ```
 
 The committed core baseline is a **development** baseline for core source tree
 8ba05c55b9ff22e14491dff6d706144564ccc6be at 681f994, not a previously published release. Its original JAR
-hash is retained for provenance. It covers DriverKit-owned public/protected classes, JVM method/field
+hash is retained for provenance. It covers Bridle-owned public/protected classes, JVM method/field
 descriptors, visibility, static/final/abstract shape, direct superclass/interfaces and compile-time
 constants. API removals and new abstract obligations fail. Checks are conservative: inherited-method
 moves can require review. Generic signatures, annotations, serialized forms, source overload ambiguity,

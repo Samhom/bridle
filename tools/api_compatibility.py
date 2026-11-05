@@ -1,4 +1,4 @@
-"""Offline binary-surface compatibility checks for DriverKit-owned public/protected classes.
+"""Offline binary-surface compatibility checks for Bridle-owned public/protected classes.
 
 Snapshots are reviewed artifacts, never auto-updated by a passing build. Generic signatures,
 annotations, behavior, serialization and source-overload ambiguity need separate review.
@@ -77,7 +77,7 @@ def snapshot(jar):
     if jar.stat().st_size > 128 * 1024 * 1024: raise ValueError("Oversized API input JAR")
     classes = {}
     with zipfile.ZipFile(jar) as archive:
-        entries = [e for e in archive.infolist() if e.filename.startswith("io/github/samhom/driverkit/") and e.filename.endswith(".class")]
+        entries = [e for e in archive.infolist() if e.filename.startswith("io/github/samhom/bridle/") and e.filename.endswith(".class")]
         if len(entries) > 10000: raise ValueError("Too many API classes")
         for entry in entries:
             if entry.file_size > 16 * 1024 * 1024: raise ValueError("Oversized API class")

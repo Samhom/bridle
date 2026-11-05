@@ -8,7 +8,7 @@ bound and live threads. Warmup, payload and concurrency are the same across all 
 
 By default the native workload is a synthetic AtomicLong-backed adapter. For actual Jedis GET set
 DRIVERKIT_BENCH_REDIS_HOST, PORT, TLS, USER and PASSWORD through the environment. TLS defaults true.
-The database workload is read-only on driverkit:benchmark:read-only; endpoints must be trusted local
+The database workload is read-only on bridle:benchmark:read-only; endpoints must be trusted local
 or benchmark infrastructure. Output excludes endpoints, credentials, payloads and native exceptions.
 This compares core governance overhead, not every product-specific facade or a production SLA.
 

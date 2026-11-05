@@ -3,14 +3,14 @@
 The starter creates a ClientRuntime only when the application has not supplied one. Native driver
 factories load conditionally when that adapter and its native client are present. Native adapters and
 Actuator are optional dependencies: add only the adapters used by your application. Application resource
-factories can replace the default beans named driverKitRedisFactory, driverKitSearchFactory,
-driverKitDocumentsFactory or driverKitMessagingFactory. Custom ResourceFactory<C,S> implementations
+factories can replace the default beans named bridleRedisFactory, bridleSearchFactory,
+bridleDocumentsFactory or bridleMessagingFactory. Custom ResourceFactory<C,S> implementations
 retain their actual settings and native types; they do not place vendor dependencies in the core.
 
 Example (values refer to trusted infrastructure, not user input):
 
 ```yaml
-driverkit:
+bridle:
   application: orders
   environment: production
   resources:
@@ -35,9 +35,9 @@ A configured resource without exactly one matching factory fails startup rather 
 Resource registrations close with the context, including when the runtime was supplied by the user;
 other registrations in that runtime are not owned by the resource binding.
 
-DriverKitResources.clients() exposes a read-only map of managed handles. Configuration metadata covers
+BridleResources.clients() exposes a read-only map of managed handles. Configuration metadata covers
 runtime and resource properties for IDE completion. Unknown fields are rejected by Boot binding.
-With Actuator present, driverKitHealthIndicator reports only lifecycle readiness and aggregate counts;
+With Actuator present, bridleHealthIndicator reports only lifecycle readiness and aggregate counts;
 it makes no network calls and does not expose settings, hosts or credentials. Existing application
-endpoint exposure/authentication settings remain in control. Set driverkit.health-enabled=false to
+endpoint exposure/authentication settings remain in control. Set bridle.health-enabled=false to
 disable it. Local health UP is not evidence that the remote database is currently reachable.

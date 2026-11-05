@@ -28,7 +28,7 @@ python3 tools/audit_dependencies.py
 
 ## gRPC 试验模块
 
-`driverkit-rocketmq-grpc` 改用官方 `rocketmq-client-java-noshade:5.2.2`，不再使用内嵌旧依赖的 fat JAR。固定 SHA-256 的二进制/源码输入重建 `RpcClientImpl`，移除 trust-all TLS，将入站消息限制为 16 MiB，并适配现代 gRPC 的解析器 scheme。域名按原始 authority 校验；IP 通道使用目标 IP 验证证书 IP SAN，TLS 多 IP 共用通道因无法逐一绑定身份而明确拒绝。
+`bridle-rocketmq-grpc` 改用官方 `rocketmq-client-java-noshade:5.2.2`，不再使用内嵌旧依赖的 fat JAR。固定 SHA-256 的二进制/源码输入重建 `RpcClientImpl`，移除 trust-all TLS，将入站消息限制为 16 MiB，并适配现代 gRPC 的解析器 scheme。域名按原始 authority 校验；IP 通道使用目标 IP 验证证书 IP SAN，TLS 多 IP 共用通道因无法逐一绑定身份而明确拒绝。
 
 实际依赖由 gRPC/OTel BOM 与固定的 Protobuf 4.36.2、Guava 33.7.2、Zstd 1.5.7-24、LZ4 1.12 管理，不携带日志后端。独立 CI 执行 `-Pexperimental-grpc` 构建、认证拒绝、原生通道重连、未知 CA 拒绝与内嵌组件审查。应用不可再引入旧 fat JAR 或原版 noshade，否则产生同名类歧义。
 
@@ -38,7 +38,7 @@ python3 tools/audit_dependencies.py
 
 5.5.1 的 `TlsSystemConfig` 默认开启 TLS 测试模式、关闭客户端验证服务器；`TlsHelper` 对这些配置使用信任全部证书的管理器。仅设置 `setUseTLS(true)` 不能作为安全保证；关闭测试模式也不足以证明完整的主机名校验。
 
-`driverkit-rocketmq-transport` 使用官方 5.5.1 二进制与源码的固定 SHA-256 重建 Remoting。构建保留原生类，仅重新编译 `NettyRemotingClient` 并替换 TLS 初始化和 DNS 解析前的目标属性传递；不使用反射，不修改全局上游 TLS 参数。构建输入改变即失败，升级须重新审查。补丁依照 JDK 信任库验证证书链，按 NameServer/Broker 各自原始目标执行 HTTPS 身份验证，允许 TLS 1.2/1.3，握手期限受连接超时限制。初始化失败直接拒绝；没有降级为明文的路径。
+`bridle-rocketmq` 使用官方 5.5.1 二进制与源码的固定 SHA-256 重建 Remoting。构建保留原生类，仅重新编译 `NettyRemotingClient` 并替换 TLS 初始化和 DNS 解析前的目标属性传递；不使用反射，不修改全局上游 TLS 参数。构建输入改变即失败，升级须重新审查。补丁依照 JDK 信任库验证证书链，按 NameServer/Broker 各自原始目标执行 HTTPS 身份验证，允许 TLS 1.2/1.3，握手期限受连接超时限制。初始化失败直接拒绝；没有降级为明文的路径。
 
 适配器排除原版 `rocketmq-remoting`，应用不得再从其他依赖引入该原版构件，否则同名类会产生类路径歧义。私有 CA 由部署配置 JDK truststore；补丁不读取上游的 `tls.test.mode.enable`、`tls.client.authServer` 等不安全开关，也暂不支持客户端证书。回环真实握手测试覆盖可信链、未知 CA、错误 DNS、缺少 IP SAN 与过期证书。真实 Broker TLS、客户端证书及目标网络策略仍需目标环境验证。`tls=false` 必须由可信配置显式选择并使用受保护网络。
 
@@ -62,4 +62,4 @@ ES 7.17 的支持已于 [2026-01-15 结束](https://www.elastic.co/support/eol)�
 
 Guava is managed at 33.7.2-jre in the build and published BOMs. The October 27 advisory update GHSA-xxph-c9ww-hj94 / CVE-2026-102554 covers earlier native-deserialization implementations; the SDK does not expose Java object deserialization, and retains the dependency audit rather than suppressing this finding. Reference: https://github.com/advisories/GHSA-xxph-c9ww-hj94
 
-Couchbase core-io 3.13.0 embeds vulnerable Guava 33.4.0. driverkit-couchbase-core pins the official core binary and replaces the embedded relocated component with official Guava 33.7.2-jre via Maven Shade. The adapter excludes the original core-io JAR; applications must not reintroduce duplicate core classes. The audit inspects built SDK JAR metadata as well as external dependencies, so embedded components in rebuilds remain checked. Native API version remains 3.13.0; OSGi bundle deployment is not supported by this rebuild.
+Couchbase core-io 3.13.0 embeds vulnerable Guava 33.4.0. bridle-couchbase pins the official core binary and replaces the embedded relocated component with official Guava 33.7.2-jre via Maven Shade. The adapter excludes the original core-io JAR; applications must not reintroduce duplicate core classes. The audit inspects built SDK JAR metadata as well as external dependencies, so embedded components in rebuilds remain checked. Native API version remains 3.13.0; OSGi bundle deployment is not supported by this rebuild.

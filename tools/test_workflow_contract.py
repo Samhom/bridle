@@ -26,7 +26,7 @@ class WorkflowContextContractTest(unittest.TestCase):
         for path in (ROOT/".github/workflows").glob("*.yml"):
             self.assertEqual([],invalid_runner_contexts(path.read_text(encoding="utf-8")),path.name)
         release=(ROOT/".github/workflows/release.yml").read_text(encoding="utf-8")
-        self.assertIn('GNUPGHOME=$RUNNER_TEMP/driverkit-gnupg',release)
+        self.assertIn('GNUPGHOME=$RUNNER_TEMP/bridle-gnupg',release)
         self.assertIn("if not configured: raise SystemExit(0)",release)
 
 if __name__=="__main__":unittest.main()

@@ -9,9 +9,9 @@ class ArtifactConsumerContractTest(unittest.TestCase):
     def test_consumer_is_not_a_reactor_child_and_imports_only_the_public_bom(self):
         pom=consumer_pom("boot","0.1.0-SNAPSHOT")
         self.assertNotIn("<parent>",pom)
-        self.assertIn("<artifactId>driverkit-bom</artifactId>",pom)
-        self.assertIn("<artifactId>driverkit-spring-boot</artifactId>",pom)
-        self.assertNotIn("<artifactId>driverkit-redis-jedis</artifactId>",pom)
+        self.assertIn("<artifactId>bridle-bom</artifactId>",pom)
+        self.assertIn("<artifactId>bridle-spring-boot</artifactId>",pom)
+        self.assertNotIn("<artifactId>bridle-redis</artifactId>",pom)
         with self.assertRaises(ValueError):consumer_pom("boot","bad<version>")
 
     def test_original_or_duplicate_patched_classes_and_reactor_directories_fail(self):

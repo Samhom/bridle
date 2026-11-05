@@ -11,18 +11,18 @@ The schedule mixes resource registration/re-registration, asynchronous native wo
 borrowed sessions, configuration publication and stale updates, revocation, repeated close and delayed
 close of older handles. It checks generation/settings coherence, monotonically observed effective
 revisions, no resurrection of revoked/closed handles, final registry/resource/isolated-thread counts,
-and no additional `driverkit-` threads after a round closes. Existing baseline threads are excluded.
+and no additional `bridle-` threads after a round closes. Existing baseline threads are excluded.
 
 Run only this test:
 
 ```text
-mvn -B -ntp -s .mvn/settings.xml -pl driverkit-core test -Dtest=LifecycleModelStressTest
+mvn -B -ntp -s .mvn/settings.xml -pl bridle-core test -Dtest=LifecycleModelStressTest
 ```
 
 For a longer soak, select explicit bounds rather than changing normal CI:
 
 ```text
-mvn -B -ntp -s .mvn/settings.xml -pl driverkit-core test -Dtest=LifecycleModelStressTest -Ddriverkit.stress.seed=6221094 -Ddriverkit.stress.rounds=500 -Ddriverkit.stress.steps=1000
+mvn -B -ntp -s .mvn/settings.xml -pl bridle-core test -Dtest=LifecycleModelStressTest -Dbridle.stress.seed=6221094 -Dbridle.stress.rounds=500 -Dbridle.stress.steps=1000
 ```
 
 Both rounds and per-caller steps accept 1–10,000. Each worker has a completion deadline, native calls

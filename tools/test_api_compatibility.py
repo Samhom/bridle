@@ -34,7 +34,7 @@ class ApiCompatibilityTest(unittest.TestCase):
         if not javac: self.skipTest("JDK compiler not available")
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); source = root / "Api.java"
-            source.write_text('package io.github.samhom.driverkit.fixture; public class Api { '
+            source.write_text('package io.github.samhom.bridle.fixture; public class Api { '
                 'public static final int VALUE=7; protected String read(int a){return "fixture";} '
                 'private void hidden(){} public static class Nested{} private static class Secret{} }',encoding="utf-8")
             subprocess.run([javac,"-d",str(root),str(source)],check=True,capture_output=True,timeout=30)
@@ -42,7 +42,7 @@ class ApiCompatibilityTest(unittest.TestCase):
             with zipfile.ZipFile(jar,"w") as archive:
                 for file in root.rglob("*.class"):archive.write(file,file.relative_to(root).as_posix())
             api=snapshot(jar)["classes"]
-            name="io/github/samhom/driverkit/fixture/Api"
+            name="io/github/samhom/bridle/fixture/Api"
             self.assertIn("read(I)Ljava/lang/String;",api[name]["methods"])
             self.assertNotIn("hidden()V",api[name]["methods"])
             self.assertEqual([3,"00000007"],api[name]["fields"]["VALUEI"]["constant"])

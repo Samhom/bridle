@@ -18,7 +18,7 @@ jobs:
     environment: release
     steps:
       - name: Locate ephemeral signing home
-        run: echo "GNUPGHOME=$RUNNER_TEMP/driverkit-gnupg" >> "$GITHUB_ENV"
+        run: echo "GNUPGHOME=$RUNNER_TEMP/bridle-gnupg" >> "$GITHUB_ENV"
       - name: Validate requested tag
         env:
           RELEASE_TAG: ${{ inputs.tag }}
@@ -66,7 +66,7 @@ jobs:
         run: |
           mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2-cache" -Prelease verify com.spotify.fmt:fmt-maven-plugin:2.25:check org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree -DoutputType=json -DoutputFile=target/dependencies.json
           release_version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('pom.xml').getroot().findtext('{http://maven.apache.org/POM/4.0.0}version'))")
-          python3 tools/api_compatibility.py --jar "driverkit-core/target/driverkit-core-$release_version.jar" --baseline api/core-development.json
+          python3 tools/api_compatibility.py --jar "bridle-core/target/bridle-core-$release_version.jar" --baseline api/core-development.json
       - name: Audit and supplement packaged dependency inventory
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.RELEASE_SIGNING_PASSPHRASE }}
@@ -74,12 +74,12 @@ jobs:
         run: |
           python3 tools/audit_dependencies.py
           python3 tools/release_inventory.py
-          gpg --batch --yes --armor --pinentry-mode loopback --passphrase-fd 0 --local-user "$SIGNING_FINGERPRINT" --detach-sign target/driverkit-embedded-sbom.json <<< "$MAVEN_GPG_PASSPHRASE"
+          gpg --batch --yes --armor --pinentry-mode loopback --passphrase-fd 0 --local-user "$SIGNING_FINGERPRINT" --detach-sign target/bridle-embedded-sbom.json <<< "$MAVEN_GPG_PASSPHRASE"
           python3 tools/release_bundle.py --output release-bundle --fingerprint "$SIGNING_FINGERPRINT"
           gpg --batch --yes --armor --pinentry-mode loopback --passphrase-fd 0 --local-user "$SIGNING_FINGERPRINT" --detach-sign release-bundle/manifest.json <<< "$MAVEN_GPG_PASSPHRASE"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: signed-driverkit-release
+          name: signed-bridle-release
           path: release-bundle/
           if-no-files-found: error
           retention-days: 14
@@ -92,7 +92,7 @@ jobs:
           configured=os.environ.get('GNUPGHOME')
           if not configured: raise SystemExit(0)
           target=pathlib.Path(configured).resolve()
-          expected=(pathlib.Path(os.environ['RUNNER_TEMP'])/'driverkit-gnupg').resolve()
+          expected=(pathlib.Path(os.environ['RUNNER_TEMP'])/'bridle-gnupg').resolve()
           if target!=expected:raise SystemExit('Unexpected ephemeral key directory')
           if target.exists():shutil.rmtree(target)
           PY

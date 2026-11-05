@@ -47,24 +47,24 @@ def validate():
             raise ValueError("Every combination needs an explicit scope/limitation")
         evidence = row.get("evidence")
         if status == "verified":
-            if not evidence or not evidence.get("command") or not evidence.get("url", "").startswith("https://github.com/Samhom/driverkit/actions/runs/"):
+            if not evidence or not evidence.get("command") or not evidence.get("url", "").startswith("https://github.com/Samhom/bridle/actions/runs/"):
                 raise ValueError("Verified combinations require a reproducible command and immutable CI run")
         detail = row["reason"] + (" [CI](" + evidence["url"] + ")" if evidence else "")
         cells = [module, driver["artifact"] + " " + driver["version"], row["server"] + " / " + row["scope"], str(row["jdk"]), labels[status], detail]
         lines.append("| " + " | ".join(cell.replace("|", "\\|").replace("\n", " ") for cell in cells) + " |")
-    required = {"driverkit-core", "driverkit-redis-jedis", "driverkit-elasticsearch", "driverkit-couchbase", "driverkit-rocketmq", "driverkit-rocketmq-grpc", "driverkit-rocketmq-transport"}
+    required = {"bridle-core", "bridle-redis", "bridle-elasticsearch", "bridle-couchbase", "bridle-rocketmq", "bridle-rocketmq/grpc"}
     if not required <= represented:
         raise ValueError("Missing a managed driver or transport in the matrix")
     legacy_profile = pom.find("m:profiles/m:profile[m:id='legacy-drivers']", NS)
     if legacy_profile is not None:
-        legacy_bom = ET.parse(ROOT / "driverkit-legacy-bom/pom.xml").getroot()
+        legacy_bom = ET.parse(ROOT / "bridle-legacy-bom/pom.xml").getroot()
         def managed_versions(node):
             return {(d.findtext("m:groupId", namespaces=NS), d.findtext("m:artifactId", namespaces=NS)): d.findtext("m:version", namespaces=NS) for d in node.findall("m:dependencyManagement/m:dependencies/m:dependency", NS)}
         build_versions, published_versions = managed_versions(legacy_profile), managed_versions(legacy_bom)
         if any(published_versions.get(key) != value for key, value in build_versions.items()):
             raise ValueError("Legacy build and published BOM security versions drift")
         for module in legacy_profile.findall("m:modules/m:module", NS):
-            if module.text == "driverkit-legacy-bom":
+            if module.text == "bridle-legacy-bom":
                 continue
             legacy_pom = ET.parse(ROOT / module.text / "pom.xml").getroot()
             for dependency in legacy_pom.findall("m:dependencies/m:dependency", NS):

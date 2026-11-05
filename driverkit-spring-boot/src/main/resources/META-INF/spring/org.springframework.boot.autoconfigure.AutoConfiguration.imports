@@ -1,6 +1,0 @@
-io.github.samhom.driverkit.spring.DriverKitAutoConfiguration
-io.github.samhom.driverkit.spring.DriverKitRedisAutoConfiguration
-io.github.samhom.driverkit.spring.DriverKitSearchAutoConfiguration
-io.github.samhom.driverkit.spring.DriverKitDocumentsAutoConfiguration
-io.github.samhom.driverkit.spring.DriverKitMessagingAutoConfiguration
-io.github.samhom.driverkit.spring.DriverKitHealthAutoConfiguration

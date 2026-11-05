@@ -2,7 +2,7 @@
 
 The remoting 5 adapter provides send, sendOrdered, sendDelayed, sendBatch and sendTransaction.
 All use the managed admission, revision, deadline, observation and error path. Sends never acquire a
-DriverKit retry. Non-SEND_OK results remain WRITE_OUTCOME_UNKNOWN. Business keys are application
+Bridle retry. Non-SEND_OK results remain WRITE_OUTCOME_UNKNOWN. Business keys are application
 idempotency keys; they do not make the broker deduplicate messages.
 
 Ordered sends route a key to a stable sorted queue set. Await each send for a key before sending the

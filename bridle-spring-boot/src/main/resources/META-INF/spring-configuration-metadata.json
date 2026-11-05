@@ -1,0 +1,145 @@
+{
+  "groups": [
+    {
+      "name": "bridle",
+      "type": "io.github.samhom.bridle.spring.BridleProperties"
+    },
+    {
+      "name": "bridle.resources",
+      "type": "java.util.Map"
+    }
+  ],
+  "properties": [
+    {
+      "name": "bridle.application",
+      "type": "java.lang.String",
+      "defaultValue": "application",
+      "description": "Bridle application."
+    },
+    {
+      "name": "bridle.environment",
+      "type": "java.lang.String",
+      "defaultValue": "default",
+      "description": "Bridle environment."
+    },
+    {
+      "name": "bridle.max-clients",
+      "type": "java.lang.Integer",
+      "defaultValue": 128,
+      "description": "Bridle max clients."
+    },
+    {
+      "name": "bridle.call-threads",
+      "type": "java.lang.Integer",
+      "defaultValue": 16,
+      "description": "Bridle call threads."
+    },
+    {
+      "name": "bridle.queued-calls",
+      "type": "java.lang.Integer",
+      "defaultValue": 256,
+      "description": "Bridle queued calls."
+    },
+    {
+      "name": "bridle.health-enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Bridle health enabled."
+    },
+    {
+      "name": "bridle.resources.*.driver",
+      "type": "io.github.samhom.bridle.spring.ResourceProperties$Driver",
+      "description": "Trusted resource driver."
+    },
+    {
+      "name": "bridle.resources.*.host",
+      "type": "java.lang.String",
+      "description": "Trusted resource host."
+    },
+    {
+      "name": "bridle.resources.*.port",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource port."
+    },
+    {
+      "name": "bridle.resources.*.tls",
+      "type": "java.lang.Boolean",
+      "description": "Trusted resource tls."
+    },
+    {
+      "name": "bridle.resources.*.credentials-bean",
+      "type": "java.lang.String",
+      "description": "Trusted resource credentials bean."
+    },
+    {
+      "name": "bridle.resources.*.max-in-flight",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max in flight."
+    },
+    {
+      "name": "bridle.resources.*.connect-timeout",
+      "type": "java.time.Duration",
+      "description": "Trusted resource connect timeout."
+    },
+    {
+      "name": "bridle.resources.*.operation-timeout",
+      "type": "java.time.Duration",
+      "description": "Trusted resource operation timeout."
+    },
+    {
+      "name": "bridle.resources.*.shutdown-timeout",
+      "type": "java.time.Duration",
+      "description": "Trusted resource shutdown timeout."
+    },
+    {
+      "name": "bridle.resources.*.max-connections",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max connections."
+    },
+    {
+      "name": "bridle.resources.*.database",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource database."
+    },
+    {
+      "name": "bridle.resources.*.max-payload-bytes",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max payload bytes."
+    },
+    {
+      "name": "bridle.resources.*.max-batch-items",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource max batch items."
+    },
+    {
+      "name": "bridle.resources.*.bucket",
+      "type": "java.lang.String",
+      "description": "Trusted resource bucket."
+    },
+    {
+      "name": "bridle.resources.*.scope",
+      "type": "java.lang.String",
+      "description": "Trusted resource scope."
+    },
+    {
+      "name": "bridle.resources.*.collection",
+      "type": "java.lang.String",
+      "description": "Trusted resource collection."
+    },
+    {
+      "name": "bridle.resources.*.group",
+      "type": "java.lang.String",
+      "description": "Trusted resource group."
+    },
+    {
+      "name": "bridle.resources.*.topic",
+      "type": "java.lang.String",
+      "description": "Trusted resource topic."
+    },
+    {
+      "name": "bridle.resources.*.consumer-threads",
+      "type": "java.lang.Integer",
+      "description": "Trusted resource consumer threads."
+    }
+  ]
+}

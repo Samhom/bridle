@@ -16,9 +16,12 @@ class CompatibilityContractTest(unittest.TestCase):
         shutil.copy(contract.ROOT / "pom.xml", root / "pom.xml")
         (root / "docs").mkdir()
         shutil.copy(contract.ROOT / "docs/compatibility.json", root / "docs/compatibility.json")
-        for pom in contract.ROOT.glob("driverkit-*/pom.xml"):
-            (root / pom.parent.name).mkdir()
-            shutil.copy(pom, root / pom.parent.name / "pom.xml")
+        for pom in contract.ROOT.rglob("pom.xml"):
+            if pom.parent == contract.ROOT or any(part in {".git", "target"} for part in pom.parts):
+                continue
+            dest = root / pom.parent.relative_to(contract.ROOT)
+            dest.mkdir(parents=True, exist_ok=True)
+            shutil.copy(pom, dest / "pom.xml")
         return root
 
     def test_verified_server_cannot_be_declared_without_evidence(self):
@@ -42,7 +45,7 @@ class CompatibilityContractTest(unittest.TestCase):
 
     def test_legacy_native_dependency_cannot_leak_into_application(self):
         root = self.fixture()
-        pom = root / "driverkit-redis-jedis3/pom.xml"
+        pom = root / "bridle-redis/jedis3/pom.xml"
         current = pom.read_text(encoding="utf-8")
         pom.write_text(current.replace("<scope>provided</scope>", "<scope>compile</scope>"), encoding="utf-8")
         with patch.object(contract, "ROOT", root), self.assertRaisesRegex(ValueError, "provided and optional"):
@@ -50,7 +53,7 @@ class CompatibilityContractTest(unittest.TestCase):
 
     def test_product_bom_tracks_the_compiled_native_generation(self):
         root = self.fixture()
-        pom = root / "driverkit-redis-jedis3-bom/pom.xml"
+        pom = root / "bridle-redis/jedis3-bom/pom.xml"
         current = pom.read_text(encoding="utf-8")
         pom.write_text(current.replace("<version>3.10.0</version>", "<version>3.9.0</version>"), encoding="utf-8")
         with patch.object(contract, "ROOT", root), self.assertRaisesRegex(ValueError, "product BOM"):

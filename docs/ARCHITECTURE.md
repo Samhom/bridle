@@ -93,7 +93,7 @@ ES 每次同步或异步调用复制 TransportOptions，保留认证、响应上
 
 预算是原生 API 可表达的阶段上限；JVM DNS、TLS 提供者、操作系统阻塞写入及原生会话自定义代码不保证精确中断。各阶段可能存在毫秒取整和调度延迟，超时不代表写入回滚。外层截止仍负责结果交付，真实完成之前仍保留租约。旧版迁移适配器只保证初始化预算，旧版原生会话须由调用者传递操作预算。
 
-Rest5 9.5.5 的 `RequestContext` 创建 HttpClientContext 时遗失 RequestOptions 中的 RequestConfig。`driverkit-elasticsearch-transport` 使用官方二进制和源码 SHA-256 固定输入，只重新编译 Rest5Client，将 RequestConfig 复制到实际 HTTP 上下文；适配器排除原包。部署时不可再次引入原始同名类的 JAR。升级原生驱动必须重新审查补丁和协议测试。
+Rest5 9.5.5 的 `RequestContext` 创建 HttpClientContext 时遗失 RequestOptions 中的 RequestConfig。`bridle-elasticsearch` 使用官方二进制和源码 SHA-256 固定输入，只重新编译 Rest5Client，将 RequestConfig 复制到实际 HTTP 上下文；适配器排除原包。部署时不可再次引入原始同名类的 JAR。升级原生驱动必须重新审查补丁和协议测试。
 
 ## 上下文传播
 

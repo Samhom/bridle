@@ -12,7 +12,7 @@ if __name__=="__main__":
         group,artifact=coordinate.split(":",1)
         purl="pkg:maven/"+urllib.parse.quote(group,safe="")+"/"+urllib.parse.quote(artifact,safe="")+"@"+urllib.parse.quote(version,safe="")
         components.append({"type":"library","group":group,"name":artifact,"version":version,"purl":purl})
-    (root/"target/driverkit-embedded-sbom.json").write_text(json.dumps({"bomFormat":"CycloneDX","specVersion":"1.6","version":1,
-      "metadata":{"properties":[{"name":"driverkit:inventory","value":"resolved-and-packaged-embedded-coordinates"}]},
+    (root/"target/bridle-embedded-sbom.json").write_text(json.dumps({"bomFormat":"CycloneDX","specVersion":"1.6","version":1,
+      "metadata":{"properties":[{"name":"bridle:inventory","value":"resolved-and-packaged-embedded-coordinates"}]},
       "components":components},indent=2)+"\n",encoding="utf-8")
     print("Resolved/embedded coordinates:",len(components),"embedded detections:",embedded)

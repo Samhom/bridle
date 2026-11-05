@@ -27,7 +27,7 @@ class ReleaseBundleTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);(root/"target").mkdir();(root/"docs").mkdir()
             (root/"pom.xml").write_text('<project xmlns="http://maven.apache.org/POM/4.0.0"><artifactId>fixture-parent</artifactId><version>0.1.0</version><packaging>pom</packaging></project>')
-            for name in ("driverkit-sbom.json","driverkit-sbom.xml","driverkit-embedded-sbom.json"):
+            for name in ("bridle-sbom.json","bridle-sbom.xml","bridle-embedded-sbom.json"):
                 (root/"target"/name).write_text("fixture")
             (root/"target/fixture.asc").write_text("fixture signature")
             for name in ("CHANGELOG.md","MIGRATION.md","COMPATIBILITY.md","RELEASING.md"):

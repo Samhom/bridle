@@ -1,4 +1,4 @@
-import io.github.samhom.driverkit.core.*;
+import io.github.samhom.bridle.core.*;
 import java.time.Duration;
 import java.nio.file.Path;
 import java.util.*;
@@ -14,7 +14,7 @@ public final class Consumer {
     try{Class.forName(name);throw new AssertionError("Unexpected optional dependency: "+name);}catch(ClassNotFoundException expected){}
   }
   static void core() throws Exception {
-    origin(ClientRuntime.class,"driverkit-core");
+    origin(ClientRuntime.class,"bridle-core");
     try(ClientRuntime runtime=new ClientRuntime()) {
       var handle=runtime.register(new ConfigSnapshot<>(new ResourceId("consumer","test","resource"),1,"fixture"),
         new FactoryAdapter<String,String>("fixture",v->v,(v,t)->{},v->{}),ClientPolicy.defaults());
@@ -22,8 +22,8 @@ public final class Consumer {
     }
   }
   public static void main(String[] args) throws Exception {
-    version=args[0];core();origin(io.github.samhom.driverkit.elasticsearch.ElasticsearchAdapter.class,"driverkit-elasticsearch");
-    origin(co.elastic.clients.transport.rest5_client.low_level.Rest5Client.class,"driverkit-elasticsearch-transport");
+    version=args[0];core();origin(io.github.samhom.bridle.elasticsearch.ElasticsearchAdapter.class,"bridle-elasticsearch");
+    origin(co.elastic.clients.transport.rest5_client.low_level.Rest5Client.class,"bridle-elasticsearch");
     try(var transport=co.elastic.clients.transport.rest5_client.low_level.Rest5Client.builder(java.net.URI.create("http://localhost:1")).build()) {
       check(transport!=null,"Patched HTTP transport failed to initialize");
     }

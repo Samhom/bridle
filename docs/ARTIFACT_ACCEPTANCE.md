@@ -7,7 +7,7 @@ they neither compiled client code nor exercised relocated classes. These checks 
 After packaging/installing the current default reactor, run:
 
 ```text
-mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local=/absolute/path/to/driverkit/.m2-cache -DskipTests install
+mvn -B -ntp -s .mvn/settings.xml -Dmaven.repo.local=/absolute/path/to/bridle/.m2-cache -DskipTests install
 python tools/verify_artifacts.py --offline --java-home /absolute/path/to/jdk17
 ```
 
@@ -16,7 +16,7 @@ defaults to the repository's absolute .m2-cache path. On Windows, quote every -D
 dot (for example `'-Dmaven.repo.local=D:/workspace/project/.m2-cache'`). The tool invokes fixed Maven,
 javac and java argument arrays without constructing a shell command from fixture input.
 
-Five temporary projects import the published DriverKit BOM without inheriting the SDK parent. They
+Five temporary projects import the published Bridle BOM without inheriting the SDK parent. They
 resolve installed POMs/JARs with Maven's exact consumer classpath, compile a new Consumer class and run
 it in a separate JVM. External dependency downloads can reuse the cache; no SDK target/classes path is
 accepted. Before execution, installed SDK POM/JAR hashes must match the current reviewed source POMs
@@ -25,7 +25,7 @@ and packaged target JARs. A stale install fails rather than silently testing an 
 - Core: invoke a managed operation and close its runtime, with native clients absent.
 - Redis: construct and close the modern Jedis adapter's lazy pool without opening a connection.
 - Elasticsearch: construct and close the packaged patched Rest5 transport, proving it is loaded from
-  driverkit-elasticsearch-transport and not an original unpatched JAR.
+  bridle-elasticsearch and not an original unpatched JAR.
 - Couchbase: execute native JSON and relocated Guava code, load failureaccess from the patched JAR and
   verify embedded Guava metadata. The original core-io JAR is forbidden.
 - Boot alone: load actual Boot auto-configuration discovery with all native drivers and Actuator

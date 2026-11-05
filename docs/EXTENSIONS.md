@@ -6,7 +6,7 @@
 cleanup failures, rejected configuration updates and retiring-generation age. Shared execution lanes report
 shared queue/worker pressure; these are not native connection-pool utilization numbers.
 `ResourceMeters(registry,client)` binds pressure gauges with an explicit close/unregister lifetime.
-`MicrometerObserver` records `driverkit.client.queue.wait` when a call reaches a worker.
+`MicrometerObserver` records `bridle.client.queue.wait` when a call reaches a worker.
 `ExclusiveConsumer.inFlight()` and `state()` expose delivery drain pressure. Native pool-specific meters
 still require native instrumentation; no utilization is estimated from call counts.
 
@@ -24,7 +24,7 @@ exception or user-supplied message is retained. The buffer is diagnostic, not a 
 one borrowed connection for MULTI/EXEC; false uses a single bounded pipeline. A null EXEC is a
 discarded transaction (nothing applied). A pipeline element that is an exception means an unknown
 prefix may already have been applied, so the call is WRITE_OUTCOME_UNKNOWN and is not retried.
-Native objects do not escape. Scripts must be trusted deployment assets, not end-user input. No write is retried by DriverKit.
+Native objects do not escape. Scripts must be trusted deployment assets, not end-user input. No write is retried by Bridle.
 `RedisTopologyAdapter` supports native RedisSentinelClient and RedisClusterClient under ManagedClient
 ownership. Seeds and discovered infrastructure must be trusted. TLS hostname verification remains on.
 ManagedTopologyRedis now allows bounded explicit MOVED/ASK routing while blocking connection-error

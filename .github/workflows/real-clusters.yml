@@ -24,4 +24,4 @@ jobs:
       - name: Authenticated real server, network faults, restart and rotation
         run: python3 tools/real_clusters.py '${{ matrix.product }}'
       - name: Evidence
-        run: cat driverkit-integration-tests/target/real-cluster-evidence.json
+        run: cat bridle-integration-tests/target/real-cluster-evidence.json

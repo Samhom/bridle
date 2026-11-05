@@ -43,7 +43,7 @@ def bundle(root, destination, fingerprint):
             files.append(directory/"target"/(artifact+"-"+version+".jar"))
             if list((directory/"src/main/java").rglob("*.java")):
                 files += [directory/"target"/(artifact+"-"+version+suffix) for suffix in ("-sources.jar","-javadoc.jar")]
-        if module==".":files += [root/"target/driverkit-sbom.json",root/"target/driverkit-sbom.xml",root/"target/driverkit-embedded-sbom.json"]
+        if module==".":files += [root/"target/bridle-sbom.json",root/"target/bridle-sbom.xml",root/"target/bridle-embedded-sbom.json"]
         signatures=list((directory/"target").rglob("*.asc"))
         if len(signatures)>128:raise ValueError("Too many signature candidates")
         out=destination/artifact;out.mkdir()

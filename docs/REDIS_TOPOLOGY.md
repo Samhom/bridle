@@ -63,5 +63,5 @@ endpoints must remain under infrastructure control; this adapter is not an arbit
 Targeted command:
 
 ```text
-mvn -B -ntp -s .mvn/settings.xml -pl driverkit-redis-jedis -am test -Dtest=TopologyRoutingTest -Dsurefire.failIfNoSpecifiedTests=false
+mvn -B -ntp -s .mvn/settings.xml -pl bridle-redis -am test -Dtest=TopologyRoutingTest -Dsurefire.failIfNoSpecifiedTests=false
 ```

@@ -1,4 +1,4 @@
-# DriverKit
+# Bridle
 
 面向 Java 的数据库与消息客户端治理 SDK。公共运行时管理配置版本、客户端生命周期、并发、截止时间与观测；Redis、Elasticsearch、Couchbase、RocketMQ 保留各自的操作语义。
 
@@ -21,25 +21,27 @@
 
 | 模块 | 作用 |
 | --- | --- |
-| `driverkit-core` | Java 8 公共运行时、SPI、配置、限流、独占消费者控制器 |
-| `driverkit-config-apollo` | 已授权 Apollo `Config` 对象上的单文档订阅 |
-| `driverkit-settings` | 不依赖厂商驱动的不可变产品配置，供不同代际分别使用 |
-| `driverkit-observe-micrometer` | 使用应用提供的 MeterRegistry，限制指标标签基数 |
-| `driverkit-observe-opentelemetry` | 使用应用提供的 OpenTelemetry，省略查询及凭据 |
-| `driverkit-reactor` | 每次订阅创建一次受管调用的 Mono 桥接 |
-| `driverkit-redis-jedis` | Jedis 8，常用 KV API、原生 Pipeline/事务会话 |
-| `driverkit-elasticsearch` | Java API Client 9，文档操作、搜索、受限 Bulk |
-| `driverkit-couchbase` | Java SDK 3，异步 KV、CAS 和原生 API |
-| `driverkit-rocketmq` | Remoting 5，异步生产、受管 PushConsumer |
-| `driverkit-spring-boot` | Spring Boot 3.5 自动配置与应用生命周期集成 |
-| `driverkit-examples` | 无外部服务即可运行的生命周期示例 |
-| `driverkit-bom` | SDK 模块及安全修复后的依赖组合 |
+| `bridle-core` | Java 8 公共运行时、SPI、配置、限流、独占消费者控制器 |
+| `bridle-config-apollo` | 已授权 Apollo `Config` 对象上的单文档订阅 |
+| `bridle-settings` | 不依赖厂商驱动的不可变产品配置，供不同代际分别使用 |
+| `bridle-observe-micrometer` | 使用应用提供的 MeterRegistry，限制指标标签基数 |
+| `bridle-observe-opentelemetry` | 使用应用提供的 OpenTelemetry，省略查询及凭据 |
+| `bridle-reactor` | 每次订阅创建一次受管调用的 Mono 桥接 |
+| `bridle-redis` | Jedis 8，常用 KV API、原生 Pipeline/事务会话 |
+| `bridle-elasticsearch` | Java API Client 9，文档操作、搜索、受限 Bulk |
+| `bridle-couchbase` | Java SDK 3，异步 KV、CAS 和原生 API |
+| `bridle-rocketmq` | Remoting 5，异步生产、受管 PushConsumer |
+| `bridle-spring-boot` | Spring Boot 3.5 自动配置与应用生命周期集成 |
+| `bridle-examples` | 无外部服务即可运行的生命周期示例 |
+| `bridle-bom` | SDK 模块及安全修复后的依赖组合 |
 
-`driverkit-rocketmq-grpc` 位于独立的 `experimental-grpc` 配置中，默认不构建、不纳入正式 BOM。已替换官方非内嵌依赖并修补 TLS，有独立安全 CI；真实 Proxy 消费恢复仍需验证和人工安全评审；详见 [SECURITY.md](SECURITY.md)。
+当前代际的补丁类和适配器打进同一个构件：Rest5 重建在 `bridle-elasticsearch`，Couchbase core-io 重建在 `bridle-couchbase`，Remoting TLS 重建在 `bridle-rocketmq`。
 
-`-Plegacy-drivers` 提供 Jedis 3、HLRC 7、Couchbase SDK 2、Remoting 4 的具体迁移适配和独立 `driverkit-legacy-bom`。原生旧驱动由应用显式提供，不进入默认 BOM；已 EOL 或内嵌组件仍有风险的组合需人工安全评审。使用方式和代际限制见 [迁移说明](docs/MIGRATION.md)。
+`bridle-rocketmq-grpc` 的源码在 `bridle-rocketmq/grpc`，由独立的 `experimental-grpc` 配置构建，默认不进入正式 BOM。已替换官方非内嵌依赖并修补 TLS，有独立安全 CI；真实 Proxy 消费恢复仍需验证和人工安全评审；详见 [SECURITY.md](SECURITY.md)。
 
-Remoting 的 `tls=true` 使用 `driverkit-rocketmq-transport`：固定上游 5.5.1 输入并校验 SHA-256，仅修补 TLS 连接初始化，使用 JDK 信任库、TLS 1.2/1.3 和 HTTPS 主机名校验。NameServer 与路由返回的 Broker 地址均按各自原始主机名验证；IP 地址须出现在证书 IP SAN 中。不能同时引入原版 `rocketmq-remoting`，不能使用上游测试模式。私有 CA 通过部署的 JDK truststore 配置。
+`-Plegacy-drivers` 提供 Jedis 3、HLRC 7、Couchbase SDK 2、Remoting 4 的迁移适配和独立 `bridle-legacy-bom`。源码分别在 `bridle-redis/jedis3`、`bridle-elasticsearch/hlrc7`、`bridle-couchbase/sdk2`、`bridle-rocketmq/remoting4`。它们仍是独立构件：旧原生包名和当前代际不能编进同一个 classpath。原生旧驱动由应用显式提供，不进入默认 BOM；已 EOL 或内嵌组件仍有风险的组合需人工安全评审。使用方式和代际限制见 [迁移说明](docs/MIGRATION.md)。
+
+Remoting 的 `tls=true` 使用 `bridle-rocketmq`：固定上游 5.5.1 输入并校验 SHA-256，仅修补 TLS 连接初始化，使用 JDK 信任库、TLS 1.2/1.3 和 HTTPS 主机名校验。NameServer 与路由返回的 Broker 地址均按各自原始主机名验证；IP 地址须出现在证书 IP SAN 中。不能同时引入原版 `rocketmq-remoting`，不能使用上游测试模式。私有 CA 通过部署的 JDK truststore 配置。
 
 ## 构建
 
@@ -53,7 +55,7 @@ mvn -B -ntp -s .mvn/settings.xml install
 运行离线示例：
 
 ```bash
-java -cp driverkit-examples/target/driverkit-examples-0.1.0-SNAPSHOT.jar:driverkit-core/target/driverkit-core-0.1.0-SNAPSHOT.jar io.github.samhom.driverkit.examples.OfflineDemo
+java -cp bridle-examples/target/bridle-examples-0.1.0-SNAPSHOT.jar:bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar io.github.samhom.bridle.examples.OfflineDemo
 ```
 
 Windows classpath 分隔符为 `;`。也可以使用 [verify.ps1](verify.ps1)；本机 Windows Unix-domain Pipe 不可用时可显式传入 `-WindowsTcpPipe`，该选项仅作用于测试 JVM。
@@ -66,8 +68,8 @@ Windows classpath 分隔符为 `;`。也可以使用 [verify.ps1](verify.ps1)；
 <dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>io.github.samhom.driverkit</groupId>
-      <artifactId>driverkit-bom</artifactId>
+      <groupId>io.github.samhom.bridle</groupId>
+      <artifactId>bridle-bom</artifactId>
       <version>0.1.0-SNAPSHOT</version>
       <type>pom</type>
       <scope>import</scope>
@@ -76,8 +78,8 @@ Windows classpath 分隔符为 `;`。也可以使用 [verify.ps1](verify.ps1)；
 </dependencyManagement>
 <dependencies>
   <dependency>
-    <groupId>io.github.samhom.driverkit</groupId>
-    <artifactId>driverkit-redis-jedis</artifactId>
+    <groupId>io.github.samhom.bridle</groupId>
+    <artifactId>bridle-redis</artifactId>
   </dependency>
 </dependencies>
 ```
@@ -125,11 +127,11 @@ PropertiesSnapshotDecoder<RedisSettings> decoder = new PropertiesSnapshotDecoder
         new Endpoint(values.get("host"), Integer.parseInt(values.get("port")), true),
         CredentialsProvider.environment("REDIS_USERNAME", "REDIS_PASSWORD")));
 ApolloConfigurationSource<RedisSettings> source =
-    new ApolloConfigurationSource<>(apolloConfig, "driverkit.order-cache", decoder);
+    new ApolloConfigurationSource<>(apolloConfig, "bridle.order-cache", decoder);
 handle.bind(source);
 ```
 
-Apollo 属性 `driverkit.order-cache` 的值是一份原子发布的 Properties 文档：
+Apollo 属性 `bridle.order-cache` 的值是一份原子发布的 Properties 文档：
 
 ```properties
 revision=2
@@ -148,7 +150,7 @@ Observer observations = new CompositeObserver(
 ClientRuntime runtime = new ClientRuntime(128, 16, 256, observations);
 ```
 
-逻辑调用产生 `driverkit.client.operations` 和 `driverkit.client.operation.duration`。标签包括应用、环境、资源、驱动、操作和结果；版本、Key、消息 ID、查询、异常正文不会成为指标标签。
+逻辑调用产生 `bridle.client.operations` 和 `bridle.client.operation.duration`。标签包括应用、环境、资源、驱动、操作和结果；版本、Key、消息 ID、查询、异常正文不会成为指标标签。
 
 这些指标表示 SDK 逻辑调用。原生驱动内部的网络尝试、服务端延迟、消息重投及连接池细节有不同统计口径，需要驱动/服务端原生指标配合；SDK 不把一次逻辑调用误报成多次业务请求。
 
