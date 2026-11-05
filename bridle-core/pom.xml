@@ -10,4 +10,11 @@
   <properties>
     <maven.compiler.release>8</maven.compiler.release>
   </properties>
+  <dependencies>
+    <dependency>
+      <groupId>io.github.samhom.bridle</groupId>
+      <artifactId>bridle-circuitbreaker</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>

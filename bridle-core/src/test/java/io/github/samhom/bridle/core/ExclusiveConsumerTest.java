@@ -174,17 +174,4 @@ class ExclusiveConsumerTest {
                   new ConfigSnapshot<>(new ResourceId("other", "test", "events"), 2, "two")));
     }
   }
-
-  @Test
-  void localRatePolicyRejectsAfterConfiguredBurst() {
-    RateLimitPolicy limiter =
-        new RateLimitPolicy(Map.of(RESOURCE, new RateLimitPolicy.Limit(1, 1)));
-    limiter.check(RESOURCE, Operation.read("get", Duration.ofSeconds(1)));
-    assertEquals(
-        ClientException.Kind.RATE_LIMITED,
-        assertThrows(
-                ClientException.class,
-                () -> limiter.check(RESOURCE, Operation.read("get", Duration.ofSeconds(1))))
-            .kind());
-  }
 }

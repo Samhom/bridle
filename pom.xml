@@ -36,7 +36,14 @@
     <slf4j.version>2.0.20</slf4j.version>
   </properties>
   <modules>
+    <module>bridle-test</module>
+    <module>bridle-circuitbreaker</module>
     <module>bridle-core</module>
+    <module>bridle-ratelimiter</module>
+    <module>bridle-redis/settings</module>
+    <module>bridle-elasticsearch/settings</module>
+    <module>bridle-couchbase/settings</module>
+    <module>bridle-rocketmq/settings</module>
     <module>bridle-settings</module>
     <module>bridle-config-apollo</module>
     <module>bridle-observe-micrometer</module>
@@ -46,7 +53,7 @@
     <module>bridle-elasticsearch</module>
     <module>bridle-couchbase</module>
     <module>bridle-rocketmq</module>
-    <module>bridle-spring-boot</module>
+    <module>bridle-spring-boot3</module>
     <module>bridle-examples</module>
     <module>bridle-bom</module>
   </modules>
@@ -203,15 +210,15 @@
     <profile>
   <id>legacy-drivers</id>
   <modules>
-    <module>bridle-redis/jedis3</module>
-    <module>bridle-elasticsearch/hlrc7</module>
-    <module>bridle-couchbase/sdk2</module>
-    <module>bridle-rocketmq/remoting4</module>
+    <module>bridle-redis/legacy</module>
+    <module>bridle-elasticsearch/legacy</module>
+    <module>bridle-couchbase/legacy</module>
+    <module>bridle-rocketmq/legacy</module>
     <module>bridle-legacy-bom</module>
-        <module>bridle-redis/jedis3-bom</module>
-        <module>bridle-elasticsearch/hlrc7-bom</module>
-        <module>bridle-couchbase/sdk2-bom</module>
-        <module>bridle-rocketmq/remoting4-bom</module>
+        <module>bridle-redis/legacy-bom</module>
+        <module>bridle-elasticsearch/legacy-bom</module>
+        <module>bridle-couchbase/legacy-bom</module>
+        <module>bridle-rocketmq/legacy-bom</module>
   </modules>
   <dependencyManagement>
     <dependencies>

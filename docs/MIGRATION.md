@@ -25,7 +25,7 @@
 
 legacy BOM 固定 Fastjson `1.2.83_noneautotype`、Log4j `2.26.1`、BeanUtils `1.11.0`、Commons Lang `3.20.0`、SnakeYAML `2.4`；ES 7 / Remoting 4 排除旧 LZ4 并使用维护中的 `at.yawk.lz4`。Remoting 4 适配器仅使用显式 RPC 凭据，不支持其旧 YAML 凭据文件加载 API。原生签名测试验证补丁链接。四个模块也分别确认新代际类不存在，防止运行时选择错误版本。
 
-`bridle-settings` 只包含不可变配置和 core 依赖，不绑定任何厂商驱动。现有配置类包名及 API 保持一致，主线与旧代际可分别使用它。业务继续按原生代际 API 操作，不把 ES HLRC 请求强转成新 Java API Client 请求，不模拟 SDK 2 的 collections。
+产品配置类仍使用原来的包名，源码放在各产品的 `settings` 子模块：`bridle-redis/settings`、`bridle-elasticsearch/settings`、`bridle-couchbase/settings`、`bridle-rocketmq/settings`。这些构件只依赖 core，不绑定厂商驱动。`bridle-settings` 汇总它们，并保留跨产品的 `SettingsUpdates`。主线与旧代际都通过它使用同一套配置类。业务继续按原生代际 API 操作，不把 ES HLRC 请求强转成新 Java API Client 请求，不模拟 SDK 2 的 collections。旧代际源码目录是各产品下的 `legacy`。
 
 例如 Jedis 3 在受管调用中借还连接：
 

@@ -13,5 +13,25 @@
       <artifactId>bridle-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.github.samhom.bridle</groupId>
+      <artifactId>bridle-redis-settings</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.samhom.bridle</groupId>
+      <artifactId>bridle-elasticsearch-settings</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.samhom.bridle</groupId>
+      <artifactId>bridle-couchbase-settings</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.samhom.bridle</groupId>
+      <artifactId>bridle-rocketmq-settings</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

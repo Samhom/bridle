@@ -1,5 +1,7 @@
 # Spring Boot resources
 
+The starter artifact is `bridle-spring-boot3`. Shared auto-configuration lives in `io.github.samhom.bridle.springboot3`. Redis, Elasticsearch, Couchbase and RocketMQ auto-configuration live in the `redis`, `elasticsearch`, `couchbase` and `rocketmq` subpackages. Health lives in `health`.
+
 The starter creates a ClientRuntime only when the application has not supplied one. Native driver
 factories load conditionally when that adapter and its native client are present. Native adapters and
 Actuator are optional dependencies: add only the adapters used by your application. Application resource

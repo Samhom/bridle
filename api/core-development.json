@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "jar_sha256": "b6f6a17073a13a0f2206ddaf1798726eb07e8127ccceb56ddd0c15484e8ca075",
+  "jar_sha256": "92dc733fd57033fb274619164999b4615992b882e58dfcec319ae216ea8b2aab",
   "classes": {
     "io/github/samhom/bridle/core/AdapterCapabilities": {
       "flags": 17,
@@ -162,6 +162,9 @@
         },
         "remainingMillis(Ljava/time/Duration;)I": {
           "flags": 1
+        },
+        "millisWithin(J)I": {
+          "flags": 9
         },
         "checkDeadline()V": {
           "flags": 1
@@ -1310,7 +1313,13 @@
         "executeAwait(Lio/github/samhom/bridle/core/Operation;Lio/github/samhom/bridle/core/AsyncCall;)Ljava/lang/Object;": {
           "flags": 1
         },
+        "executeAwait(Lio/github/samhom/bridle/core/ClientSession;Lio/github/samhom/bridle/core/Operation;Lio/github/samhom/bridle/core/AsyncCall;)Ljava/lang/Object;": {
+          "flags": 1
+        },
         "executeAsync(Lio/github/samhom/bridle/core/Operation;Lio/github/samhom/bridle/core/AsyncCall;)Ljava/util/concurrent/CompletableFuture;": {
+          "flags": 1
+        },
+        "executeAsync(Lio/github/samhom/bridle/core/ClientSession;Lio/github/samhom/bridle/core/Operation;Lio/github/samhom/bridle/core/AsyncCall;)Ljava/util/concurrent/CompletableFuture;": {
           "flags": 1
         },
         "revoke()V": {
@@ -1660,5 +1669,5 @@
       }
     }
   },
-  "label": "Development baseline 681f994; core source tree 8ba05c55b9ff22e14491dff6d706144564ccc6be; not a published release"
+  "label": "Development baseline after the module and package split; not a published release"
 }

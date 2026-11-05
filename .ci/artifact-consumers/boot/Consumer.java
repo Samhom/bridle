@@ -25,15 +25,15 @@ public final class Consumer {
   @org.springframework.boot.autoconfigure.EnableAutoConfiguration
   static class Application {}
   public static void main(String[] args) throws Exception {
-    version=args[0];core();origin(io.github.samhom.bridle.spring.BridleAutoConfiguration.class,"bridle-spring-boot");
+    version=args[0];core();origin(io.github.samhom.bridle.springboot3.BridleAutoConfiguration.class,"bridle-spring-boot3");
     for(String absent:List.of("redis.clients.jedis.RedisClient","co.elastic.clients.elasticsearch.ElasticsearchClient",
       "com.couchbase.client.java.Cluster","org.apache.rocketmq.client.producer.DefaultMQProducer",
       "org.springframework.boot.actuate.health.HealthIndicator"))missing(absent);
     ClientRuntime runtime;
     try(var context=new org.springframework.context.annotation.AnnotationConfigApplicationContext(Application.class)) {
       runtime=context.getBean(ClientRuntime.class);
-      check(context.getBean(io.github.samhom.bridle.spring.BridleResources.class).clients().isEmpty(),"Unexpected resources");
-      check(context.getBeansOfType(io.github.samhom.bridle.spring.ResourceFactory.class).isEmpty(),"Optional native factory linked without native client");
+      check(context.getBean(io.github.samhom.bridle.springboot3.BridleResources.class).clients().isEmpty(),"Unexpected resources");
+      check(context.getBeansOfType(io.github.samhom.bridle.springboot3.ResourceFactory.class).isEmpty(),"Optional native factory linked without native client");
     }
     try {runtime.register(new ConfigSnapshot<>(new ResourceId("consumer","test","closed"),1,"fixture"),
       new FactoryAdapter<String,String>("fixture",v->v,(v,t)->{},v->{}),ClientPolicy.defaults());

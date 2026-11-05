@@ -1,5 +1,6 @@
 package io.github.samhom.bridle.core;
 
+import io.github.samhom.bridle.circuitbreaker.CircuitBreakerRegistry;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ public final class ClientRuntime implements AutoCloseable {
   final ScheduledThreadPoolExecutor timers;
   final CompletionDispatcher completions;
   final LifecycleCoordinator lifecycle;
+  final CircuitBreakerRegistry circuitBreakers = new CircuitBreakerRegistry();
   private boolean closed;
   private int isolatedThreads;
 

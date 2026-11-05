@@ -1,6 +1,0 @@
-io.github.samhom.bridle.spring.BridleAutoConfiguration
-io.github.samhom.bridle.spring.BridleRedisAutoConfiguration
-io.github.samhom.bridle.spring.BridleSearchAutoConfiguration
-io.github.samhom.bridle.spring.BridleDocumentsAutoConfiguration
-io.github.samhom.bridle.spring.BridleMessagingAutoConfiguration
-io.github.samhom.bridle.spring.BridleHealthAutoConfiguration

@@ -31,10 +31,10 @@ SDK 版本为 `0.1.0-SNAPSHOT`。矩阵中的“已验证”只覆盖该行精�
 | bridle-rocketmq | rocketmq-remoting 5.5.1 | RocketMQ 5.5.1 TLS / 真实 Broker TLS | 17 | 理论兼容 / 待验证 | 本地真实握手通过；未运行真实 Broker TLS/mTLS 拓扑。 |
 | bridle-rocketmq/grpc | rocketmq-client-java-noshade 5.2.2 | 本地 gRPC 服务 / 实验模块传输 | 17 | 已验证 | 认证拒绝、无启动重试、断线重连、未知 CA 拒绝；默认隔离。 [CI](https://github.com/Samhom/bridle/actions/runs/39602884827) |
 | bridle-rocketmq/grpc | rocketmq-client-java-noshade 5.2.2 | RocketMQ 5.5.1 Proxy / 实验模块消费 | 17 | 理论兼容 / 待验证 | 尚无真实 Proxy 消费恢复和位点证据，需人工安全评审。 |
-| bridle-redis/jedis3 | jedis 3.10.0 | Redis 6.x/7.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
-| bridle-elasticsearch/hlrc7 | elasticsearch-rest-high-level-client 7.17.29 | Elasticsearch 7.17.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
-| bridle-couchbase/sdk2 | java-client 2.7.23 | Couchbase Server 6.x/7.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
-| bridle-rocketmq/remoting4 | rocketmq-client 4.9.8 | RocketMQ 4.9.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
+| bridle-redis/legacy | jedis 3.10.0 | Redis 6.x/7.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
+| bridle-elasticsearch/legacy | elasticsearch-rest-high-level-client 7.17.29 | Elasticsearch 7.17.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
+| bridle-couchbase/legacy | java-client 2.7.23 | Couchbase Server 6.x/7.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
+| bridle-rocketmq/legacy | rocketmq-client 4.9.8 | RocketMQ 4.9.x / 隔离迁移适配 | 17 | 理论兼容 / 待验证 | 具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。 |
 
 <!-- END COMPATIBILITY MATRIX -->
 

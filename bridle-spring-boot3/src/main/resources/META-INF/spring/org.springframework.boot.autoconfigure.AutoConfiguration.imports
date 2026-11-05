@@ -1,0 +1,6 @@
+io.github.samhom.bridle.springboot3.BridleAutoConfiguration
+io.github.samhom.bridle.springboot3.redis.BridleRedisAutoConfiguration
+io.github.samhom.bridle.springboot3.elasticsearch.BridleSearchAutoConfiguration
+io.github.samhom.bridle.springboot3.couchbase.BridleDocumentsAutoConfiguration
+io.github.samhom.bridle.springboot3.rocketmq.BridleMessagingAutoConfiguration
+io.github.samhom.bridle.springboot3.health.BridleHealthAutoConfiguration

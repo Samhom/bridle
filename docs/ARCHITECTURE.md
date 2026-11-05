@@ -67,7 +67,7 @@ Redis 数据库编号、Couchbase Bucket/Scope/Collection、RocketMQ Topic/Group
 
 Observer 接收不含载荷的逻辑操作元数据；每次调用或订阅仅完成一次观测。Micrometer 观测器限制身份数，超限后汇聚到固定 overflow 序列。OpenTelemetry 的应用采样与导出配置由应用提供。
 
-AdmissionPolicy 是快速本地准入扩展；内置按资源配置的令牌桶。DriverAdapter、ConsumerAdapter、ConfigurationSource、CredentialsProvider、Observer 为公开扩展点。配置只选择应用预先注册的实现，不加载远端代码或执行表达式。
+AdmissionPolicy 是快速本地准入扩展。按资源配置的令牌桶在 `bridle-ratelimiter`。DriverAdapter、ConsumerAdapter、ConfigurationSource、CredentialsProvider、Observer 为公开扩展点。配置只选择应用预先注册的实现，不加载远端代码或执行表达式。
 
 原生请求、资源池和逻辑业务调用有独立观测层次。当前核心不推测原生内部重试次数。产品特有路由、双写、事务或降级应提供明确的操作与一致性契约后接入。
 
@@ -149,6 +149,6 @@ Couchbase 代际发布前还须确认配置中的目标 Bucket 已就绪。setti
 
 ClientPolicy 的可选 ExecutionPolicy.isolated(threads, queuedCalls) 为资源分配独立的有界调用执行器，不占用其他资源的公共调用线程；资源并发、总截止和回调容量限制继续生效。每个资源最多 64 个线程、10000 个队列位置，每运行时最多预留 1024 个隔离线程。只有线程真正终止才返还额度，无法中断的旧线程不会让反复重建无限增加线程。关闭会拒绝新任务、清理排队租约并中断仍在执行的任务。
 
-withCircuitBreaker(failureThreshold, openFor) 可独立启用，默认关闭。计数窗口按 Resilience4j 的 count-based sliding window：窗口长度是阈值的两倍，连续暂时失败达到阈值会打开；窗口记满后，记录失败占比达到 50% 也会打开，因此失败和成功交替出现时不会被一次成功清零。暂时的原生失败和已开始请求的超时计入断路；本地排队拒绝、取消、权限和参数错误不计入。withSlowCallThreshold 把达到该耗时的成功调用也记为失败，未配置时成功调用只记成功。OPEN 快速返回 CIRCUIT_OPEN，不自动发请求或重放写入。等待结束后进入 HALF_OPEN，同时在途的探测数不超过 min(阈值, 8)；这一组探测全部结束后，失败占比仍达到 50% 就重新打开，否则关闭。代际序号隔离迟到结果，旧成功不会关闭新的断路状态。circuitStatus 提供状态、当前连续失败数和剩余等待时间。
+ClientPolicy.withCircuitBreaker(CircuitBreakerConfig.of(failureThreshold, openFor)) 可独立启用，默认关闭。配置和状态机在 `bridle-circuitbreaker`：公共类型在 `io.github.samhom.bridle.circuitbreaker`，窗口实现在 `internal`。计数窗口长度是阈值的两倍，连续暂时失败达到阈值会打开；窗口记满后，记录失败占比达到 50% 也会打开，因此失败和成功交替出现时不会被一次成功清零。暂时的原生失败和已开始请求的超时计入断路；本地排队拒绝、取消、权限和参数错误不计入。withSlowCallThreshold 把达到该耗时的成功调用也记为失败，未配置时成功调用只记成功。OPEN 快速返回 CIRCUIT_OPEN，不自动发请求或重放写入。等待结束后进入 HALF_OPEN，同时在途的探测数不超过 min(阈值, 8)；这一组探测全部结束后，失败占比仍达到 50% 就重新打开，否则关闭。代际序号隔离迟到结果，旧成功不会关闭新的断路状态。每个运行时持有 CircuitBreakerRegistry，circuitStatus 提供状态、当前连续失败数和剩余等待时间。限流在 `bridle-ratelimiter`。
 
 隔离与熔断覆盖受管 execute/executeAsync；直接原生会话、业务自行创建的线程和原生驱动内部线程仍由应用及厂商驱动约束。回调交付容量和生命周期工作池继续使用原有运行时总上限，并非按资源无限复制。

@@ -21,7 +21,7 @@ GROUP = "io.github.samhom.bridle"
 NS = {"m": "http://maven.apache.org/POM/4.0.0"}
 CASES = {"core": "bridle-core", "redis": "bridle-redis",
          "search": "bridle-elasticsearch", "documents": "bridle-couchbase",
-         "boot": "bridle-spring-boot"}
+         "boot": "bridle-spring-boot3"}
 
 
 def digest(path):
@@ -39,8 +39,28 @@ def consumer_pom(case, version):
 </project>"""
 
 
+def module_pom(artifact, root):
+    if artifact == "bridle-parent":
+        return root / "pom.xml"
+    direct = root / artifact / "pom.xml"
+    if direct.is_file():
+        parsed = ET.parse(direct).getroot()
+        if parsed.findtext("m:artifactId", namespaces=NS) == artifact:
+            return direct
+    matches = []
+    for pom in root.glob("**/pom.xml"):
+        if any(part in {".git", "target"} for part in pom.parts):
+            continue
+        parsed = ET.parse(pom).getroot()
+        if parsed.findtext("m:artifactId", namespaces=NS) == artifact:
+            matches.append(pom)
+    if len(matches) != 1:
+        raise ValueError("Cannot locate module POM: " + artifact)
+    return matches[0]
+
+
 def check_installed_pom(artifact, version, repository, root=ROOT):
-    source = root / ("pom.xml" if artifact == "bridle-parent" else artifact + "/pom.xml")
+    source = module_pom(artifact, root)
     installed = repository / GROUP.replace(".", "/") / artifact / version / (artifact + "-" + version + ".pom")
     if not installed.is_file() or digest(installed) != digest(source):
         raise ValueError("Install current SDK POM before acceptance: " + artifact)
@@ -63,7 +83,7 @@ def check_classpath(text, version, repository, root=ROOT):
             if not path.name.endswith(expected):
                 raise ValueError("Mixed SDK artifact versions")
             artifact = path.name[:-len(expected)]
-            built = root / artifact / "target" / path.name
+            built = module_pom(artifact, root).parent / "target" / path.name
             if not built.is_file() or digest(path) != digest(built):
                 raise ValueError("Install the packaged SDK artifact before acceptance: " + artifact)
             check_installed_pom(artifact, version, repository, root)

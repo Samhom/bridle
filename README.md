@@ -21,9 +21,12 @@
 
 | 模块 | 作用 |
 | --- | --- |
-| `bridle-core` | Java 8 公共运行时、SPI、配置、限流、独占消费者控制器 |
+| `bridle-core` | Java 8 公共运行时、生命周期、调用上下文和扩展点 |
+| `bridle-circuitbreaker` | 计数窗口熔断、注册表和状态事件 |
+| `bridle-ratelimiter` | 按资源的本地令牌桶 |
+| `bridle-test` | 测试用的手动时钟，生产代码不依赖它 |
 | `bridle-config-apollo` | 已授权 Apollo `Config` 对象上的单文档订阅 |
-| `bridle-settings` | 不依赖厂商驱动的不可变产品配置，供不同代际分别使用 |
+| `bridle-settings` | 汇总各产品配置构件，并提供跨产品的 `SettingsUpdates` |
 | `bridle-observe-micrometer` | 使用应用提供的 MeterRegistry，限制指标标签基数 |
 | `bridle-observe-opentelemetry` | 使用应用提供的 OpenTelemetry，省略查询及凭据 |
 | `bridle-reactor` | 每次订阅创建一次受管调用的 Mono 桥接 |
@@ -31,7 +34,7 @@
 | `bridle-elasticsearch` | Java API Client 9，文档操作、搜索、受限 Bulk |
 | `bridle-couchbase` | Java SDK 3，异步 KV、CAS 和原生 API |
 | `bridle-rocketmq` | Remoting 5，异步生产、受管 PushConsumer |
-| `bridle-spring-boot` | Spring Boot 3.5 自动配置与应用生命周期集成 |
+| `bridle-spring-boot3` | Spring Boot 3.5 自动配置。公共类型在 `springboot3`，产品自动配置在对应子包 |
 | `bridle-examples` | 无外部服务即可运行的生命周期示例 |
 | `bridle-bom` | SDK 模块及安全修复后的依赖组合 |
 
@@ -39,7 +42,7 @@
 
 `bridle-rocketmq-grpc` 的源码在 `bridle-rocketmq/grpc`，由独立的 `experimental-grpc` 配置构建，默认不进入正式 BOM。已替换官方非内嵌依赖并修补 TLS，有独立安全 CI；真实 Proxy 消费恢复仍需验证和人工安全评审；详见 [SECURITY.md](SECURITY.md)。
 
-`-Plegacy-drivers` 提供 Jedis 3、HLRC 7、Couchbase SDK 2、Remoting 4 的迁移适配和独立 `bridle-legacy-bom`。源码分别在 `bridle-redis/jedis3`、`bridle-elasticsearch/hlrc7`、`bridle-couchbase/sdk2`、`bridle-rocketmq/remoting4`。它们仍是独立构件：旧原生包名和当前代际不能编进同一个 classpath。原生旧驱动由应用显式提供，不进入默认 BOM；已 EOL 或内嵌组件仍有风险的组合需人工安全评审。使用方式和代际限制见 [迁移说明](docs/MIGRATION.md)。
+`-Plegacy-drivers` 提供 Jedis 3、HLRC 7、Couchbase SDK 2、Remoting 4 的迁移适配和独立 `bridle-legacy-bom`。源码分别在 `bridle-redis/legacy`、`bridle-elasticsearch/legacy`、`bridle-couchbase/legacy`、`bridle-rocketmq/legacy`。它们仍是独立构件：旧原生包名和当前代际不能编进同一个 classpath。原生旧驱动由应用显式提供，不进入默认 BOM；已 EOL 或内嵌组件仍有风险的组合需人工安全评审。使用方式和代际限制见 [迁移说明](docs/MIGRATION.md)。
 
 Remoting 的 `tls=true` 使用 `bridle-rocketmq`：固定上游 5.5.1 输入并校验 SHA-256，仅修补 TLS 连接初始化，使用 JDK 信任库、TLS 1.2/1.3 和 HTTPS 主机名校验。NameServer 与路由返回的 Broker 地址均按各自原始主机名验证；IP 地址须出现在证书 IP SAN 中。不能同时引入原版 `rocketmq-remoting`，不能使用上游测试模式。私有 CA 通过部署的 JDK truststore 配置。
 
@@ -55,7 +58,7 @@ mvn -B -ntp -s .mvn/settings.xml install
 运行离线示例：
 
 ```bash
-java -cp bridle-examples/target/bridle-examples-0.1.0-SNAPSHOT.jar:bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar io.github.samhom.bridle.examples.OfflineDemo
+java -cp bridle-examples/target/bridle-examples-0.1.0-SNAPSHOT.jar:bridle-circuitbreaker/target/bridle-circuitbreaker-0.1.0-SNAPSHOT.jar:bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar io.github.samhom.bridle.examples.OfflineDemo
 ```
 
 Windows classpath 分隔符为 `;`。也可以使用 [verify.ps1](verify.ps1)；本机 Windows Unix-domain Pipe 不可用时可显式传入 `-WindowsTcpPipe`，该选项仅作用于测试 JVM。

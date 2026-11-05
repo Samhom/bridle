@@ -1,5 +1,6 @@
 package io.github.samhom.bridle.core;
 
+import io.github.samhom.bridle.circuitbreaker.CircuitBreakerConfig;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -7,6 +8,7 @@ import java.util.Objects;
 public final class ClientPolicy {
   private final int maxInFlight;
   private final ExecutionPolicy execution;
+  private final CircuitBreakerConfig circuit;
   private final Duration warmupTimeout;
   private final Duration shutdownTimeout;
 
@@ -19,7 +21,17 @@ public final class ClientPolicy {
       Duration warmupTimeout,
       Duration shutdownTimeout,
       ExecutionPolicy execution) {
+    this(maxInFlight, warmupTimeout, shutdownTimeout, execution, CircuitBreakerConfig.disabled());
+  }
+
+  private ClientPolicy(
+      int maxInFlight,
+      Duration warmupTimeout,
+      Duration shutdownTimeout,
+      ExecutionPolicy execution,
+      CircuitBreakerConfig circuit) {
     this.execution = Objects.requireNonNull(execution);
+    this.circuit = Objects.requireNonNull(circuit);
     if (maxInFlight < 1 || maxInFlight > 1000000)
       throw new IllegalArgumentException("Invalid in-flight limit");
     this.maxInFlight = maxInFlight;
@@ -40,8 +52,17 @@ public final class ClientPolicy {
     return new ClientPolicy(1024, Duration.ofSeconds(10), Duration.ofSeconds(30));
   }
 
+  public ClientPolicy withCircuitBreaker(CircuitBreakerConfig circuit) {
+    return new ClientPolicy(
+        maxInFlight, warmupTimeout, shutdownTimeout, execution, Objects.requireNonNull(circuit));
+  }
+
   public ExecutionPolicy execution() {
     return execution;
+  }
+
+  public CircuitBreakerConfig circuitBreaker() {
+    return circuit;
   }
 
   public int maxInFlight() {

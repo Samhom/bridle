@@ -14,7 +14,42 @@
       <dependency><groupId>io.github.samhom.bridle</groupId><artifactId>bridle-settings</artifactId><version>${project.version}</version></dependency>
       <dependency>
         <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-circuitbreaker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
         <artifactId>bridle-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-ratelimiter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-test</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-redis-settings</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-elasticsearch-settings</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-couchbase-settings</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.samhom.bridle</groupId>
+        <artifactId>bridle-rocketmq-settings</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -104,7 +139,7 @@
       </dependency>
       <dependency>
         <groupId>io.github.samhom.bridle</groupId>
-        <artifactId>bridle-spring-boot</artifactId>
+        <artifactId>bridle-spring-boot3</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

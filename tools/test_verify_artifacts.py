@@ -10,7 +10,7 @@ class ArtifactConsumerContractTest(unittest.TestCase):
         pom=consumer_pom("boot","0.1.0-SNAPSHOT")
         self.assertNotIn("<parent>",pom)
         self.assertIn("<artifactId>bridle-bom</artifactId>",pom)
-        self.assertIn("<artifactId>bridle-spring-boot</artifactId>",pom)
+        self.assertIn("<artifactId>bridle-spring-boot3</artifactId>",pom)
         self.assertNotIn("<artifactId>bridle-redis</artifactId>",pom)
         with self.assertRaises(ValueError):consumer_pom("boot","bad<version>")
 

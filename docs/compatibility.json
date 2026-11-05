@@ -15,7 +15,7 @@
       "reason": "Java 8 smoke；17/21 生命周期、并发和期限回归。",
       "evidence": {
         "url": "https://github.com/Samhom/bridle/actions/runs/39602884827",
-        "command": "javac -cp bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar -d .local/java8 .ci/Java8Smoke.java && java -cp .local/java8:bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar Java8Smoke"
+        "command": "javac -cp bridle-circuitbreaker/target/bridle-circuitbreaker-0.1.0-SNAPSHOT.jar:bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar -d .local/java8 .ci/Java8Smoke.java && java -cp .local/java8:bridle-circuitbreaker/target/bridle-circuitbreaker-0.1.0-SNAPSHOT.jar:bridle-core/target/bridle-core-0.1.0-SNAPSHOT.jar Java8Smoke"
       }
     },
     {
@@ -335,7 +335,7 @@
       "reason": "尚无真实 Proxy 消费恢复和位点证据，需人工安全评审。"
     },
     {
-      "module": "bridle-redis/jedis3",
+      "module": "bridle-redis/legacy",
       "driver": {
         "artifact": "jedis",
         "version": "3.10.0"
@@ -347,7 +347,7 @@
       "reason": "具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。"
     },
     {
-      "module": "bridle-elasticsearch/hlrc7",
+      "module": "bridle-elasticsearch/legacy",
       "driver": {
         "artifact": "elasticsearch-rest-high-level-client",
         "version": "7.17.29"
@@ -359,7 +359,7 @@
       "reason": "具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。"
     },
     {
-      "module": "bridle-couchbase/sdk2",
+      "module": "bridle-couchbase/legacy",
       "driver": {
         "artifact": "java-client",
         "version": "2.7.23"
@@ -371,7 +371,7 @@
       "reason": "具体生命周期适配已实现；原生依赖由应用提供，真实旧集群未验证，需人工安全评审。"
     },
     {
-      "module": "bridle-rocketmq/remoting4",
+      "module": "bridle-rocketmq/legacy",
       "driver": {
         "artifact": "rocketmq-client",
         "version": "4.9.8"

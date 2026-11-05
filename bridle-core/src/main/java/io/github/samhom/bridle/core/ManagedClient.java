@@ -1,5 +1,8 @@
 package io.github.samhom.bridle.core;
 
+import io.github.samhom.bridle.circuitbreaker.CallNotPermittedException;
+import io.github.samhom.bridle.circuitbreaker.CircuitBreaker;
+import io.github.samhom.bridle.circuitbreaker.CircuitStatus;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -73,7 +76,8 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     this.observer = observer;
     this.resource = initial.resource();
     this.callExecutor = runtime.callExecutor(policy);
-    this.circuit = new CircuitBreaker(policy.execution());
+    this.circuit =
+        runtime.circuitBreakers.circuitBreaker(resource.toString(), policy.circuitBreaker());
     try {
       ConfigurationTracker.Attempt attempt = configuration.begin(initial.revision());
       active = create(initial, attempt);
@@ -605,7 +609,11 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     try {
       runtime.admission.check(resource, operation);
       completion = runtime.reserveCompletion();
-      permit = circuit.acquire();
+      try {
+        permit = circuit.acquire();
+      } catch (CallNotPermittedException open) {
+        throw new ClientException(ClientException.Kind.CIRCUIT_OPEN, open.getMessage(), open);
+      }
       lease = session == null ? session() : session.retainFor(this);
       try {
         context.limitTo(adapter.operationTimeout(settingsOf(lease), operation));
@@ -783,7 +791,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
                 "Operation deadline exceeded");
         if (!select()) return;
       }
-      if (started) permit.complete(error);
+      if (started) permit.complete(circuitResult(error));
       else permit.abandon();
       deliver(null, error, Observation.Outcome.TIMEOUT);
     }
@@ -816,7 +824,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
       // Native work has finished: release capacity before any user callback is delivered.
       releasePhysical();
       if (selected) {
-        if (started) permit.complete(error);
+        if (started) permit.complete(circuitResult(error));
         else permit.abandon();
         deliver(value, error, outcome);
       }
@@ -871,6 +879,25 @@ public final class ManagedClient<C, S> implements AutoCloseable {
       } catch (Throwable error) {
         finish(null, translate(error, operation), Observation.Outcome.ERROR);
       }
+    }
+  }
+
+  private static CircuitBreaker.Result circuitResult(Throwable error) {
+    if (error == null) return CircuitBreaker.Result.SUCCESS;
+    ClientException.Kind kind =
+        error instanceof ClientException
+            ? ((ClientException) error).kind()
+            : ClientException.Kind.DRIVER_FAILURE;
+    switch (kind) {
+      case TIMEOUT:
+      case UNAVAILABLE:
+      case CONNECTION_FAILURE:
+      case DRIVER_FAILURE:
+      case RATE_LIMITED:
+      case SERVER_REJECTED:
+        return CircuitBreaker.Result.FAILURE;
+      default:
+        return CircuitBreaker.Result.IGNORED;
     }
   }
 
