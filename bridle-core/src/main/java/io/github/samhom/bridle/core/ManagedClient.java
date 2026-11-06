@@ -84,9 +84,14 @@ public final class ManagedClient<C, S> implements AutoCloseable {
       attemptedRevision = initial.revision();
       configuration.finish(attempt, initial.revision(), null);
     } catch (RuntimeException | Error failure) {
+      runtime.circuitBreakers.remove(resource.toString(), circuit);
       if (callExecutor != runtime.calls) callExecutor.shutdownNow();
       throw failure;
     }
+  }
+
+  CircuitBreaker registeredCircuit() {
+    return circuit;
   }
 
   private Generation create(ConfigSnapshot<S> snapshot, ConfigurationTracker.Attempt attempt) {

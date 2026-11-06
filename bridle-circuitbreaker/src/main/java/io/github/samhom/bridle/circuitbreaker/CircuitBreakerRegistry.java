@@ -18,6 +18,15 @@ public final class CircuitBreakerRegistry {
     return created;
   }
 
+  /**
+   * Drops the entry only when lookup still points at the breaker that is leaving. A replacement
+   * registered under the same name stays in place.
+   */
+  public boolean remove(String name, CircuitBreaker breaker) {
+    if (name == null || breaker == null) return false;
+    return breakers.remove(name, breaker);
+  }
+
   public CircuitBreaker find(String name) {
     return breakers.get(name);
   }

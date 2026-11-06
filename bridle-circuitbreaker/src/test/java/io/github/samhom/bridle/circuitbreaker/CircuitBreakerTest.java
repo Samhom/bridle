@@ -3,6 +3,7 @@ package io.github.samhom.bridle.circuitbreaker;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -104,6 +105,19 @@ class CircuitBreakerTest {
     breaker.acquire().complete(CircuitBreaker.Result.FAILURE);
     assertEquals(1, opened.get());
     assertEquals(breaker, registry.find("app/test/cache"));
+  }
+
+  @Test
+  void removeDropsOnlyTheBreakerThatIsLeaving() {
+    CircuitBreakerRegistry registry = new CircuitBreakerRegistry();
+    CircuitBreaker first =
+        registry.circuitBreaker("app/test/cache", CircuitBreakerConfig.of(1, SECOND));
+    CircuitBreaker replacement =
+        registry.circuitBreaker("app/test/cache", CircuitBreakerConfig.of(2, SECOND));
+    assertFalse(registry.remove("app/test/cache", first));
+    assertEquals(replacement, registry.find("app/test/cache"));
+    assertTrue(registry.remove("app/test/cache", replacement));
+    assertNull(registry.find("app/test/cache"));
   }
 
   @Test

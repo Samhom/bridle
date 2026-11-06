@@ -230,6 +230,7 @@ public final class ClientRuntime implements AutoCloseable {
       // A delayed callback from an older handle must never remove a replacement registration.
       if (clients.get(client.resource()) == client) clients.remove(client.resource());
     }
+    circuitBreakers.remove(client.resource().toString(), client.registeredCircuit());
   }
 
   synchronized CompletionDispatcher.Reservation reserveCompletion() {

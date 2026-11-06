@@ -2,6 +2,7 @@ package io.github.samhom.bridle.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.samhom.bridle.circuitbreaker.CircuitBreakerConfig;
 import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,6 +72,55 @@ class ClientRuntimeTest {
       workers.shutdownNow();
       workers.awaitTermination(3, TimeUnit.SECONDS);
       runtime.close(Duration.ofMillis(50));
+    }
+  }
+
+  @Test
+  void closedClientDropsItsCircuitBreakerAndAReplacementStartsClean() {
+    ResourceId resource = new ResourceId("example", "test", "cache");
+    ConfigSnapshot<String> initial = new ConfigSnapshot<>(resource, 1, "one");
+    FactoryAdapter<String, String> adapter =
+        new FactoryAdapter<>(
+            "fixture", settings -> settings, (client, timeout) -> {}, client -> {});
+    ClientPolicy policy =
+        ClientPolicy.defaults()
+            .withCircuitBreaker(CircuitBreakerConfig.of(2, Duration.ofSeconds(1)));
+    try (ClientRuntime runtime = new ClientRuntime(4, 1, 4, Observer.NOOP)) {
+      ManagedClient<String, String> first = runtime.register(initial, adapter, policy);
+      assertNotNull(runtime.circuitBreakers.find(resource.toString()));
+      first.close();
+      assertNull(runtime.circuitBreakers.find(resource.toString()));
+      ManagedClient<String, String> replacement = runtime.register(initial, adapter, policy);
+      assertNotNull(runtime.circuitBreakers.find(resource.toString()));
+      replacement.close();
+      assertEquals(0, runtime.clientCount());
+      assertNull(runtime.circuitBreakers.find(resource.toString()));
+    }
+  }
+
+  @Test
+  void failedInitializationDropsItsCircuitBreaker() {
+    ResourceId resource = new ResourceId("example", "test", "cache");
+    FactoryAdapter<String, String> adapter =
+        new FactoryAdapter<>(
+            "fixture",
+            settings -> {
+              throw new IllegalStateException("down");
+            },
+            (client, timeout) -> {},
+            client -> {});
+    try (ClientRuntime runtime = new ClientRuntime(4, 1, 4, Observer.NOOP)) {
+      ClientException failure =
+          assertThrows(
+              ClientException.class,
+              () ->
+                  runtime.register(
+                      new ConfigSnapshot<>(resource, 1, "one"),
+                      adapter,
+                      ClientPolicy.defaults()
+                          .withCircuitBreaker(CircuitBreakerConfig.of(2, Duration.ofSeconds(1)))));
+      assertEquals(ClientException.Kind.UPDATE_REJECTED, failure.kind());
+      assertNull(runtime.circuitBreakers.find(resource.toString()));
     }
   }
 }
