@@ -2,12 +2,18 @@ package io.github.samhom.bridle.circuitbreaker;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.samhom.bridle.circuitbreaker.event.CircuitBreakerEvent;
 import io.github.samhom.bridle.test.ManualClock;
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class CircuitBreakerTest {
@@ -98,6 +104,45 @@ class CircuitBreakerTest {
     breaker.acquire().complete(CircuitBreaker.Result.FAILURE);
     assertEquals(1, opened.get());
     assertEquals(breaker, registry.find("app/test/cache"));
+  }
+
+  @Test
+  void listenerReadsStatusWithoutWaitingForTheStateLock() throws Exception {
+    CircuitBreaker breaker = breaker(1, SECOND, new ManualClock());
+    CountDownLatch publishing = new CountDownLatch(1);
+    CountDownLatch statusRead = new CountDownLatch(1);
+    AtomicReference<CircuitStatus.State> seen = new AtomicReference<>();
+    AtomicLong blockedNanos = new AtomicLong();
+    breaker.onEvent(
+        event -> {
+          if (event.type() != CircuitBreakerEvent.Type.OPENED) return;
+          publishing.countDown();
+          long started = System.nanoTime();
+          try {
+            statusRead.await(2, TimeUnit.SECONDS);
+          } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+          }
+          blockedNanos.set(System.nanoTime() - started);
+        });
+    Thread reader =
+        new Thread(
+            () -> {
+              try {
+                if (!publishing.await(2, TimeUnit.SECONDS)) return;
+                seen.set(breaker.status().state());
+              } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+              } finally {
+                statusRead.countDown();
+              }
+            });
+    reader.start();
+    breaker.acquire().complete(CircuitBreaker.Result.FAILURE);
+    reader.join(2_000);
+    assertFalse(reader.isAlive());
+    assertEquals(CircuitStatus.State.OPEN, seen.get());
+    assertTrue(blockedNanos.get() < 1_500_000_000L);
   }
 
   private static CircuitBreaker breaker(int failures, Duration openFor, ManualClock clock) {

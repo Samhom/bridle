@@ -33,22 +33,34 @@ public final class CircuitBreakerStateMachine {
     this.window = new byte[config.windowSize()];
   }
 
-  public synchronized Permit acquire() {
-    if (config.failureThreshold() == 0) return new Permit(epoch, false);
-    if (state == CircuitStatus.State.OPEN) {
-      if (clock.getAsLong() - until < 0)
-        throw new CallNotPermittedException("Resource circuit is open");
-      state = CircuitStatus.State.HALF_OPEN;
-      epoch++;
-      inFlight = 0;
-      halfFinished = 0;
-      halfFailures = 0;
-      events.accept(CircuitBreakerEvent.Type.HALF_OPEN);
+  public Permit acquire() {
+    CircuitBreakerEvent.Type transition = null;
+    try {
+      synchronized (this) {
+        if (config.failureThreshold() == 0) return new Permit(epoch, false);
+        if (state == CircuitStatus.State.OPEN) {
+          if (clock.getAsLong() - until < 0)
+            throw new CallNotPermittedException("Resource circuit is open");
+          state = CircuitStatus.State.HALF_OPEN;
+          epoch++;
+          inFlight = 0;
+          halfFinished = 0;
+          halfFailures = 0;
+          transition = CircuitBreakerEvent.Type.HALF_OPEN;
+        }
+        if (state == CircuitStatus.State.HALF_OPEN
+            && inFlight + halfFinished >= config.halfOpenCalls())
+          throw new CallNotPermittedException("Circuit recovery sample is still in flight");
+        if (state == CircuitStatus.State.HALF_OPEN) inFlight++;
+        return new Permit(epoch, state == CircuitStatus.State.HALF_OPEN);
+      }
+    } finally {
+      publish(transition);
     }
-    if (state == CircuitStatus.State.HALF_OPEN && inFlight + halfFinished >= config.halfOpenCalls())
-      throw new CallNotPermittedException("Circuit recovery sample is still in flight");
-    if (state == CircuitStatus.State.HALF_OPEN) inFlight++;
-    return new Permit(epoch, state == CircuitStatus.State.HALF_OPEN);
+  }
+
+  private void publish(CircuitBreakerEvent.Type transition) {
+    if (transition != null) events.accept(transition);
   }
 
   public synchronized CircuitStatus status() {
@@ -58,7 +70,7 @@ public final class CircuitBreakerStateMachine {
         state == CircuitStatus.State.OPEN ? Math.max(0, until - clock.getAsLong()) : 0);
   }
 
-  private void record(boolean failure) {
+  private CircuitBreakerEvent.Type record(boolean failure) {
     if (windowSize == window.length) {
       if (window[windowCursor] == FAILURE) windowFailures--;
     } else {
@@ -73,14 +85,15 @@ public final class CircuitBreakerStateMachine {
       consecutive = 0;
     }
     if (consecutive >= config.failureThreshold() || rateExceeded(windowFailures, windowSize))
-      open();
+      return open();
+    return null;
   }
 
   private boolean rateExceeded(int failures, int calls) {
     return calls == window.length && failures * 100 >= calls * config.failureRatePercent();
   }
 
-  private void open() {
+  private CircuitBreakerEvent.Type open() {
     state = CircuitStatus.State.OPEN;
     until = clock.getAsLong() + config.openFor().toNanos();
     inFlight = 0;
@@ -90,10 +103,10 @@ public final class CircuitBreakerStateMachine {
     windowSize = 0;
     windowFailures = 0;
     epoch++;
-    events.accept(CircuitBreakerEvent.Type.OPENED);
+    return CircuitBreakerEvent.Type.OPENED;
   }
 
-  private void close() {
+  private CircuitBreakerEvent.Type close() {
     state = CircuitStatus.State.CLOSED;
     consecutive = 0;
     inFlight = 0;
@@ -103,7 +116,7 @@ public final class CircuitBreakerStateMachine {
     windowSize = 0;
     windowFailures = 0;
     epoch++;
-    events.accept(CircuitBreakerEvent.Type.CLOSED);
+    return CircuitBreakerEvent.Type.CLOSED;
   }
 
   public final class Permit {
@@ -127,33 +140,34 @@ public final class CircuitBreakerStateMachine {
 
     public void complete(CircuitBreaker.Result result) {
       if (!finished.compareAndSet(false, true)) return;
-      synchronized (CircuitBreakerStateMachine.this) {
-        if (config.failureThreshold() == 0 || generation != epoch) return;
-        boolean slow =
-            result == CircuitBreaker.Result.SUCCESS
-                && config.slowCallThreshold().toNanos() > 0
-                && clock.getAsLong() - started >= config.slowCallThreshold().toNanos();
-        if (result == CircuitBreaker.Result.SUCCESS && !slow) {
-          if (probe) finishProbe(false);
-          else record(false);
-          return;
+      CircuitBreakerEvent.Type transition = null;
+      try {
+        synchronized (CircuitBreakerStateMachine.this) {
+          if (config.failureThreshold() == 0 || generation != epoch) return;
+          boolean slow =
+              result == CircuitBreaker.Result.SUCCESS
+                  && config.slowCallThreshold().toNanos() > 0
+                  && clock.getAsLong() - started >= config.slowCallThreshold().toNanos();
+          if (result == CircuitBreaker.Result.SUCCESS && !slow) {
+            transition = probe ? finishProbe(false) : record(false);
+          } else if (result != CircuitBreaker.Result.IGNORED) {
+            transition = probe ? finishProbe(true) : record(true);
+          } else if (probe && inFlight > 0) {
+            inFlight--;
+          }
         }
-        if (result == CircuitBreaker.Result.IGNORED) {
-          if (probe && inFlight > 0) inFlight--;
-          return;
-        }
-        if (probe) finishProbe(true);
-        else record(true);
+      } finally {
+        publish(transition);
       }
     }
 
-    private void finishProbe(boolean failure) {
+    private CircuitBreakerEvent.Type finishProbe(boolean failure) {
       if (inFlight > 0) inFlight--;
       halfFinished++;
       if (failure) halfFailures++;
-      if (halfFinished < config.halfOpenCalls() || inFlight > 0) return;
-      if (halfFailures * 100 >= halfFinished * config.failureRatePercent()) open();
-      else close();
+      if (halfFinished < config.halfOpenCalls() || inFlight > 0) return null;
+      if (halfFailures * 100 >= halfFinished * config.failureRatePercent()) return open();
+      return close();
     }
   }
 }
