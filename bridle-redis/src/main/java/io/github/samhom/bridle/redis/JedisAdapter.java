@@ -98,13 +98,7 @@ public final class JedisAdapter implements DriverAdapter<RedisClient, RedisSetti
     long deadline = System.nanoTime() + timeout.toNanos();
     try (Connection connection = client.getPool().getResource()) {
       int previous = connection.getSoTimeout();
-      int remaining =
-          (int)
-              Math.max(
-                  1,
-                  Math.min(
-                      Integer.MAX_VALUE,
-                      (Math.max(1, deadline - System.nanoTime()) + 999999) / 1000000));
+      int remaining = readinessMillis(Math.max(0, deadline - System.nanoTime()));
       connection.setSoTimeout(previous <= 0 ? remaining : Math.min(previous, remaining));
       try {
         connection.sendCommand(Protocol.Command.PING);
@@ -114,6 +108,14 @@ public final class JedisAdapter implements DriverAdapter<RedisClient, RedisSetti
         connection.setSoTimeout(previous);
       }
     }
+  }
+
+  /**
+   * Floors the remaining warmup budget. A sub-millisecond remainder is a timeout, not one extra
+   * millisecond.
+   */
+  static int readinessMillis(long remainingNanos) {
+    return CallContext.millisWithin(remainingNanos);
   }
 
   @Override

@@ -62,7 +62,7 @@ public final class ManagedProducer {
           if (delay > 0) message.setDelayTimeLevel(delay);
           CompletableFuture<SendResult> completion = new CompletableFuture<>();
           SendCallback callback = callback(completion);
-          long remaining = Math.max(1, context.remaining().toMillis());
+          long remaining = sendTimeoutMillis(context.remaining());
           if (orderingKey == null) producer.send(message, callback, remaining);
           else
             producer.send(
@@ -104,8 +104,7 @@ public final class ManagedProducer {
           Limits.bytes(encoded, settings.maxMessageBytes());
           context.checkDeadline();
           CompletableFuture<SendResult> completion = new CompletableFuture<>();
-          producer.send(
-              messages, callback(completion), Math.max(1, context.remaining().toMillis()));
+          producer.send(messages, callback(completion), sendTimeoutMillis(context.remaining()));
           return completion;
         });
   }
@@ -132,6 +131,14 @@ public final class ManagedProducer {
                 "Broker returned a non-final transaction send status");
           return result;
         });
+  }
+
+  /**
+   * Floors the remaining send budget. A sub-millisecond remainder is a timeout, not one extra
+   * millisecond.
+   */
+  static int sendTimeoutMillis(Duration remaining) {
+    return CallContext.millisWithin(remaining.toNanos());
   }
 
   private static Message message(Outbound value, RocketMqSettings settings) {
