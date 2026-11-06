@@ -390,9 +390,12 @@ public final class ManagedSearch {
 
   private static ElasticsearchAsyncClient async(
       ElasticsearchClient client, ElasticsearchSettings settings, Duration ceiling) {
-    int millis = (int) Math.max(1, ceiling.toMillis());
-    return async(
-        client, duration -> (int) Math.max(1, Math.min(millis, duration.toMillis())), settings);
+    return async(client, stage -> stageMillis(ceiling, stage), settings);
+  }
+
+  /** Floors the smaller of the generation ceiling and the stage timeout. */
+  static int stageMillis(Duration ceiling, Duration stage) {
+    return CallContext.millisWithin(Math.min(ceiling.toNanos(), stage.toNanos()));
   }
 
   private static ElasticsearchAsyncClient async(ElasticsearchClient client, CallContext context) {

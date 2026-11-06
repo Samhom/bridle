@@ -114,14 +114,19 @@ public final class ElasticsearchAdapter
         .restClientRequestOptionsBuilder()
         .setRequestConfig(
             org.apache.hc.client5.http.config.RequestConfig.custom()
-                .setResponseTimeout(
-                    Timeout.ofMilliseconds(Math.max(1, (timeout.toNanos() + 999999) / 1000000)))
-                .setConnectionRequestTimeout(
-                    Timeout.ofMilliseconds(Math.max(1, (timeout.toNanos() + 999999) / 1000000)))
+                .setResponseTimeout(Timeout.ofMilliseconds(readinessMillis(timeout)))
+                .setConnectionRequestTimeout(Timeout.ofMilliseconds(readinessMillis(timeout)))
                 .setRedirectsEnabled(false)
                 .build());
     if (!client.withTransportOptions(options.build()).ping().value())
       throw new IllegalStateException("Elasticsearch readiness check failed");
+  }
+
+  /**
+   * Floors the warmup budget. A sub-millisecond remainder is a timeout, not one extra millisecond.
+   */
+  static int readinessMillis(Duration timeout) {
+    return CallContext.millisWithin(timeout.toNanos());
   }
 
   @Override
