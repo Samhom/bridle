@@ -61,7 +61,7 @@ public final class Elasticsearch7Adapter
 
   @Override
   public void warmup(RestHighLevelClient client, Duration remaining) throws Exception {
-    int millis = (int) Math.max(1, Math.min(Integer.MAX_VALUE, remaining.toMillis()));
+    int millis = readinessMillis(remaining);
     RequestOptions.Builder options = RequestOptions.DEFAULT.toBuilder();
     options.setRequestConfig(
         org.apache.http.client.config.RequestConfig.custom()
@@ -74,6 +74,13 @@ public final class Elasticsearch7Adapter
         new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(16 * 1024 * 1024));
     if (!client.ping(options.build()))
       throw new IllegalStateException("Elasticsearch readiness failed");
+  }
+
+  /**
+   * Floors the warmup budget. A sub-millisecond remainder is a timeout, not one extra millisecond.
+   */
+  static int readinessMillis(Duration remaining) {
+    return CallContext.millisWithin(remaining.toNanos());
   }
 
   @Override

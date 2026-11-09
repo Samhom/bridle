@@ -4,6 +4,7 @@ import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.CouchbaseCluster;
 import com.couchbase.client.java.env.CouchbaseEnvironment;
 import com.couchbase.client.java.env.DefaultCouchbaseEnvironment;
+import io.github.samhom.bridle.core.CallContext;
 import io.github.samhom.bridle.core.Credentials;
 import io.github.samhom.bridle.couchbase.CouchbaseSettings;
 import java.time.Duration;
@@ -31,7 +32,8 @@ public final class Couchbase2Client {
     long deadline = System.nanoTime() + budget.toNanos();
     try (Credentials credentials = settings.credentials().resolve()) {
       long connect =
-          Math.max(1, Math.min(settings.connectTimeout().toMillis(), remaining(deadline)));
+          Math.min(
+              settings.connectTimeout().toMillis(), connectMillis(deadline - System.nanoTime()));
       environment =
           DefaultCouchbaseEnvironment.builder()
               .ioPoolSize(2)
@@ -46,7 +48,9 @@ public final class Couchbase2Client {
       cluster.authenticate(credentials.username(), credentials.passwordText());
       bucket =
           cluster.openBucket(
-              settings.bucket(), Math.min(connect, remaining(deadline)), TimeUnit.MILLISECONDS);
+              settings.bucket(),
+              Math.min(connect, connectMillis(deadline - System.nanoTime())),
+              TimeUnit.MILLISECONDS);
     }
   }
 
@@ -79,6 +83,13 @@ public final class Couchbase2Client {
     }
     if (!completed[0] || !completed[1] || !completed[2])
       throw new IllegalStateException("SDK 2 resource cleanup did not complete");
+  }
+
+  /**
+   * Floors the connect budget. A sub-millisecond remainder is a timeout, not one extra millisecond.
+   */
+  static int connectMillis(long remainingNanos) {
+    return CallContext.millisWithin(Math.max(0, remainingNanos));
   }
 
   private static long remaining(long deadline) {

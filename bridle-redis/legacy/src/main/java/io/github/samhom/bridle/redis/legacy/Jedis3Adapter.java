@@ -57,11 +57,8 @@ public final class Jedis3Adapter implements DriverAdapter<JedisPool, RedisSettin
   public void warmup(JedisPool pool, Duration remaining) {
     try (Jedis client = pool.getResource()) {
       int old = client.getClient().getSoTimeout();
-      client
-          .getClient()
-          .setSoTimeout(
-              (int)
-                  Math.max(1, Math.min(old <= 0 ? Integer.MAX_VALUE : old, remaining.toMillis())));
+      int budget = readinessMillis(remaining);
+      client.getClient().setSoTimeout(old <= 0 ? budget : Math.min(old, budget));
       try {
         if (!"PONG".equals(client.ping()))
           throw new IllegalStateException("Redis readiness failed");
@@ -69,6 +66,13 @@ public final class Jedis3Adapter implements DriverAdapter<JedisPool, RedisSettin
         client.getClient().setSoTimeout(old);
       }
     }
+  }
+
+  /**
+   * Floors the warmup budget. A sub-millisecond remainder is a timeout, not one extra millisecond.
+   */
+  static int readinessMillis(Duration remaining) {
+    return CallContext.millisWithin(remaining.toNanos());
   }
 
   @Override
