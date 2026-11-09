@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.json.JsonData;
 import io.github.samhom.bridle.core.*;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
@@ -46,7 +45,7 @@ public final class ManagedSearch {
   }
 
   private static void id(String value) {
-    if (value == null || value.isEmpty() || value.getBytes(StandardCharsets.UTF_8).length > 512)
+    if (value == null || value.isEmpty() || Limits.exceedsUtf8(value, 512))
       throw new IllegalArgumentException("Invalid document ID size");
   }
 
@@ -77,11 +76,11 @@ public final class ManagedSearch {
       String index, String id, String json) {
     index(index);
     id(id);
-    Limits.bytes(json == null ? null : json.getBytes(StandardCharsets.UTF_8), maximumDocument);
+    Limits.utf8(json, maximumDocument);
     JsonData document = JsonData.fromJson(json);
     return (nativeClient, context) -> {
-      Limits.bytes(
-          json.getBytes(StandardCharsets.UTF_8),
+      Limits.utf8(
+          json,
           Math.min(
               maximumDocument, context.settings(ElasticsearchSettings.class).maxDocumentBytes()));
       return async(nativeClient, context)

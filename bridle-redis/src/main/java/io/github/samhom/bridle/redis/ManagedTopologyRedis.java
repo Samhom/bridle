@@ -1,7 +1,6 @@
 package io.github.samhom.bridle.redis;
 
 import io.github.samhom.bridle.core.*;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Objects;
 import redis.clients.jedis.UnifiedJedis;
@@ -26,7 +25,7 @@ public final class ManagedTopologyRedis {
   }
 
   private static void key(String key) {
-    if (key == null || key.getBytes(StandardCharsets.UTF_8).length > 4096)
+    if (key == null || Limits.exceedsUtf8(key, 4096))
       throw new IllegalArgumentException("Invalid Redis key size");
   }
 
@@ -39,7 +38,7 @@ public final class ManagedTopologyRedis {
 
   public void set(String key, String value, Duration ttl) {
     key(key);
-    Limits.bytes(value == null ? null : value.getBytes(StandardCharsets.UTF_8), maxValueBytes);
+    Limits.utf8(value, maxValueBytes);
     if (ttl == null
         || ttl.compareTo(Duration.ofMillis(1)) < 0
         || ttl.compareTo(Duration.ofDays(3650)) > 0)

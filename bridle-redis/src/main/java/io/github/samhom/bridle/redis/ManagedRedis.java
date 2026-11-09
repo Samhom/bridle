@@ -1,7 +1,6 @@
 package io.github.samhom.bridle.redis;
 
 import io.github.samhom.bridle.core.*;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.params.SetParams;
@@ -19,7 +18,7 @@ public final class ManagedRedis {
   }
 
   private static void key(String key) {
-    if (key == null || key.getBytes(StandardCharsets.UTF_8).length > 4096)
+    if (key == null || Limits.exceedsUtf8(key, 4096))
       throw new IllegalArgumentException("Invalid Redis key size");
   }
 
@@ -33,7 +32,7 @@ public final class ManagedRedis {
 
   public void set(String key, String value, Duration ttl) {
     key(key);
-    Limits.bytes(value == null ? null : value.getBytes(StandardCharsets.UTF_8), maxValueBytes);
+    Limits.utf8(value, maxValueBytes);
     if (ttl == null
         || ttl.compareTo(Duration.ofMillis(1)) < 0
         || ttl.compareTo(Duration.ofDays(3650)) > 0)
@@ -41,8 +40,8 @@ public final class ManagedRedis {
     client.execute(
         Operation.write("set", timeout),
         (nativeClient, context) -> {
-          Limits.bytes(
-              value.getBytes(StandardCharsets.UTF_8),
+          Limits.utf8(
+              value,
               Math.min(maxValueBytes, context.settings(RedisSettings.class).maxValueBytes()));
           return RedisCallBudget.execute(
               nativeClient,
@@ -81,16 +80,19 @@ public final class ManagedRedis {
 
   /** Trusted, deployment-owned script only. No automatic replay of potentially mutating scripts. */
   public Object eval(String script, java.util.List<String> keys, java.util.List<String> arguments) {
-    Limits.bytes(script == null ? null : script.getBytes(StandardCharsets.UTF_8), 65536);
+    Limits.utf8(script, 65536);
     java.util.List<String> keyCopy = java.util.List.copyOf(keys),
         args = java.util.List.copyOf(arguments);
     Limits.count(keyCopy.size(), 1000);
     Limits.count(Math.max(1, args.size()), 1000);
     keyCopy.forEach(ManagedRedis::key);
     long total = 0;
-    for (String arg : args) total += arg.getBytes(StandardCharsets.UTF_8).length;
-    if (total > maxValueBytes)
-      throw new IllegalArgumentException("Script argument budget exceeded");
+    for (String arg : args) {
+      long length = Limits.utf8Bytes(arg);
+      if (total > maxValueBytes - length)
+        throw new IllegalArgumentException("Script argument budget exceeded");
+      total += length;
+    }
     final long bytes = total;
     return client.execute(
         Operation.write("eval", timeout),
@@ -110,9 +112,10 @@ public final class ManagedRedis {
     long bytes = 0;
     for (var entry : copy.entrySet()) {
       key(entry.getKey());
-      byte[] value = entry.getValue().getBytes(StandardCharsets.UTF_8);
-      Limits.bytes(value, maxValueBytes);
-      bytes += value.length;
+      long length = Limits.utf8Bytes(entry.getValue());
+      if (length > maxValueBytes)
+        throw new IllegalArgumentException("Payload is missing or oversized");
+      bytes += length;
     }
     if (bytes > 16 * 1024 * 1024) throw new IllegalArgumentException("Batch byte budget exceeded");
     return client.execute(
@@ -123,8 +126,8 @@ public final class ManagedRedis {
                 context,
                 jedis -> {
                   for (String value : copy.values())
-                    Limits.bytes(
-                        value.getBytes(StandardCharsets.UTF_8),
+                    Limits.utf8(
+                        value,
                         Math.min(
                             maxValueBytes, context.settings(RedisSettings.class).maxValueBytes()));
                   context.checkDeadline();

@@ -3,7 +3,6 @@ package io.github.samhom.bridle.couchbase;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.kv.*;
 import io.github.samhom.bridle.core.*;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,7 +29,7 @@ public final class ManagedDocuments {
   }
 
   private static void key(String key) {
-    if (key == null || key.isEmpty() || key.getBytes(StandardCharsets.UTF_8).length > 250)
+    if (key == null || key.isEmpty() || Limits.exceedsUtf8(key, 250))
       throw new IllegalArgumentException("Invalid document key size");
   }
 
@@ -79,7 +78,7 @@ public final class ManagedDocuments {
     return getAsync(key)
         .thenApply(
             document -> {
-              Limits.bytes(document.json().getBytes(StandardCharsets.UTF_8), maximum);
+              Limits.utf8(document.json(), maximum);
               return new TypedDocument<>(codec.decode(document.json()), document.cas());
             });
   }
@@ -163,7 +162,7 @@ public final class ManagedDocuments {
   }
 
   private static void path(String path) {
-    if (path == null || path.isEmpty() || path.getBytes(StandardCharsets.UTF_8).length > 1024)
+    if (path == null || path.isEmpty() || Limits.exceedsUtf8(path, 1024))
       throw new IllegalArgumentException("Subdocument path out of bounds");
   }
 
