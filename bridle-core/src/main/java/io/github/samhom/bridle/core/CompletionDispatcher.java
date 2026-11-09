@@ -1,5 +1,6 @@
 package io.github.samhom.bridle.core;
 
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -15,11 +16,21 @@ final class CompletionDispatcher {
   private boolean closed;
 
   CompletionDispatcher(int threads, int capacity) {
-    if (threads < 1 || threads > 1024 || capacity < 1 || capacity > 100000)
+    this(executor(threads, capacity), capacity);
+  }
+
+  CompletionDispatcher(ThreadPoolExecutor executor, int capacity) {
+    if (capacity < 1 || capacity > 100000)
       throw new IllegalArgumentException("Completion limits out of bounds");
     this.capacity = capacity;
+    this.executor = Objects.requireNonNull(executor, "executor");
+  }
+
+  private static ThreadPoolExecutor executor(int threads, int capacity) {
+    if (threads < 1 || threads > 1024)
+      throw new IllegalArgumentException("Completion limits out of bounds");
     AtomicInteger ids = new AtomicInteger();
-    executor =
+    ThreadPoolExecutor executor =
         new ThreadPoolExecutor(
             threads,
             threads,
@@ -33,6 +44,7 @@ final class CompletionDispatcher {
             },
             new ThreadPoolExecutor.AbortPolicy());
     executor.allowCoreThreadTimeOut(true);
+    return executor;
   }
 
   static boolean inCompletionThread() {
@@ -56,16 +68,21 @@ final class CompletionDispatcher {
         throw new IllegalStateException("Completion already selected");
       // At most capacity reservations exist. Queue capacity alone covers all of them, even
       // while a worker is returning from the finally block that releases its reservation.
-      executor.execute(
-          () -> {
-            IN_COMPLETION.set(true);
-            try {
-              completion.run();
-            } finally {
-              IN_COMPLETION.remove();
-              release();
-            }
-          });
+      try {
+        executor.execute(
+            () -> {
+              IN_COMPLETION.set(true);
+              try {
+                completion.run();
+              } finally {
+                IN_COMPLETION.remove();
+                release();
+              }
+            });
+      } catch (RuntimeException | Error failure) {
+        release();
+        throw failure;
+      }
     }
 
     void release() {
