@@ -19,4 +19,11 @@ class TimeoutFloorTest {
                 () -> ManagedProducer.sendTimeoutMillis(Duration.ofNanos(999_999)))
             .kind());
   }
+
+  @Test
+  void shutdownWaitFloorsAndStillAvoidsAZeroTimeout() {
+    assertEquals(1L, RocketMqConsumerAdapter.shutdownMillis(Duration.ofNanos(1_500_000)));
+    assertEquals(1L, RocketMqConsumerAdapter.shutdownMillis(Duration.ofNanos(999_999)));
+    assertEquals(2L, RocketMqConsumerAdapter.shutdownMillis(Duration.ofNanos(2_000_000)));
+  }
 }
