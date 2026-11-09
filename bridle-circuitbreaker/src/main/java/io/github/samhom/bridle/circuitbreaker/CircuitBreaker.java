@@ -15,10 +15,16 @@ public final class CircuitBreaker {
     IGNORED
   }
 
+  private static final CircuitStatus DISABLED_STATUS =
+      new CircuitStatus(CircuitStatus.State.DISABLED, 0, 0);
+  private static final CircuitBreaker DISABLED =
+      new CircuitBreaker("disabled", CircuitBreakerConfig.disabled());
+
   private final String name;
   private final CircuitBreakerConfig config;
   private final LongSupplier clock;
   private final CircuitBreakerStateMachine machine;
+  private final Permit inactive;
   private final CopyOnWriteArrayList<Consumer<CircuitBreakerEvent>> listeners =
       new CopyOnWriteArrayList<>();
 
@@ -26,11 +32,17 @@ public final class CircuitBreaker {
     this(name, config, System::nanoTime);
   }
 
+  /** Shared breaker for a disabled policy. It keeps no window and does not enter the state lock. */
+  public static CircuitBreaker disabled() {
+    return DISABLED;
+  }
+
   CircuitBreaker(String name, CircuitBreakerConfig config, LongSupplier clock) {
     this.name = Objects.requireNonNull(name, "name");
     this.config = Objects.requireNonNull(config, "config");
     this.clock = Objects.requireNonNull(clock, "clock");
     this.machine = new CircuitBreakerStateMachine(config, clock, this::emit);
+    this.inactive = config.failureThreshold() == 0 ? new Permit(null) : null;
   }
 
   public String name() {
@@ -42,10 +54,12 @@ public final class CircuitBreaker {
   }
 
   public Permit acquire() {
+    if (inactive != null) return inactive;
     return new Permit(machine.acquire());
   }
 
   public CircuitStatus status() {
+    if (inactive != null) return DISABLED_STATUS;
     return machine.status();
   }
 
@@ -72,11 +86,12 @@ public final class CircuitBreaker {
     }
 
     public void abandon() {
-      delegate.abandon();
+      if (delegate != null) delegate.abandon();
     }
 
     public void complete(Result result) {
-      delegate.complete(Objects.requireNonNull(result, "result"));
+      Objects.requireNonNull(result, "result");
+      if (delegate != null) delegate.complete(result);
     }
   }
 }

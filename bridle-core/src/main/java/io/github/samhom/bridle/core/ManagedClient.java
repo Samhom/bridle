@@ -77,7 +77,9 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     this.resource = initial.resource();
     this.callExecutor = runtime.callExecutor(policy);
     this.circuit =
-        runtime.circuitBreakers.circuitBreaker(resource.toString(), policy.circuitBreaker());
+        policy.circuitBreaker().failureThreshold() == 0
+            ? CircuitBreaker.disabled()
+            : runtime.circuitBreakers.circuitBreaker(resource.toString(), policy.circuitBreaker());
     try {
       ConfigurationTracker.Attempt attempt = configuration.begin(initial.revision());
       active = create(initial, attempt);

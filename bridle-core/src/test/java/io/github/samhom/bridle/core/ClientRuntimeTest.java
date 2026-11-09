@@ -3,6 +3,7 @@ package io.github.samhom.bridle.core;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.samhom.bridle.circuitbreaker.CircuitBreakerConfig;
+import io.github.samhom.bridle.circuitbreaker.CircuitStatus;
 import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,6 +73,23 @@ class ClientRuntimeTest {
       workers.shutdownNow();
       workers.awaitTermination(3, TimeUnit.SECONDS);
       runtime.close(Duration.ofMillis(50));
+    }
+  }
+
+  @Test
+  void disabledPolicyDoesNotRetainACircuitBreaker() {
+    ResourceId resource = new ResourceId("example", "test", "cache");
+    try (ClientRuntime runtime = new ClientRuntime(4, 1, 4, Observer.NOOP)) {
+      ManagedClient<String, String> client =
+          runtime.register(
+              new ConfigSnapshot<>(resource, 1, "one"),
+              new FactoryAdapter<>(
+                  "fixture", settings -> settings, (value, timeout) -> {}, value -> {}),
+              ClientPolicy.defaults());
+      assertNull(runtime.circuitBreakers.find(resource.toString()));
+      assertEquals(CircuitStatus.State.DISABLED, client.circuitStatus().state());
+      client.close();
+      assertEquals(0, runtime.clientCount());
     }
   }
 

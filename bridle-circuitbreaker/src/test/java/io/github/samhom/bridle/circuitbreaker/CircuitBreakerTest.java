@@ -121,6 +121,16 @@ class CircuitBreakerTest {
   }
 
   @Test
+  void disabledBreakerIgnoresOutcomesWithoutTakingTheStateLock() {
+    CircuitBreaker breaker = CircuitBreaker.disabled();
+    breaker.acquire().complete(CircuitBreaker.Result.FAILURE);
+    breaker.acquire().complete(CircuitBreaker.Result.FAILURE);
+    assertEquals(CircuitStatus.State.DISABLED, breaker.status().state());
+    assertEquals(0, breaker.status().consecutiveFailures());
+    assertThrows(NullPointerException.class, () -> breaker.acquire().complete(null));
+  }
+
+  @Test
   void listenerReadsStatusWithoutWaitingForTheStateLock() throws Exception {
     CircuitBreaker breaker = breaker(1, SECOND, new ManualClock());
     CountDownLatch publishing = new CountDownLatch(1);
