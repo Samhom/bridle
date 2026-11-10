@@ -2,11 +2,16 @@ package io.github.samhom.bridle.rocketmq;
 
 import io.github.samhom.bridle.core.*;
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.rocketmq.client.producer.*;
 import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageQueue;
 
 public final class ManagedProducer {
+  private static final Comparator<MessageQueue> QUEUE_ORDER =
+      Comparator.comparing(MessageQueue::getBrokerName).thenComparingInt(MessageQueue::getQueueId);
   private final ManagedClient<DefaultMQProducer, RocketMqSettings> client;
   private final Duration timeout;
 
@@ -67,16 +72,7 @@ public final class ManagedProducer {
           else
             producer.send(
                 message,
-                (queues, msg, key) -> {
-                  var sorted = new java.util.ArrayList<>(queues);
-                  sorted.sort(
-                      java.util.Comparator.comparing(
-                              org.apache.rocketmq.common.message.MessageQueue::getBrokerName)
-                          .thenComparingInt(
-                              org.apache.rocketmq.common.message.MessageQueue::getQueueId));
-                  if (sorted.isEmpty()) throw new IllegalStateException("No writable queues");
-                  return sorted.get(Math.floorMod(key.hashCode(), sorted.size()));
-                },
+                (queues, msg, key) -> orderedQueue(queues, key),
                 orderingKey,
                 callback,
                 remaining);
@@ -131,6 +127,22 @@ public final class ManagedProducer {
                 "Broker returned a non-final transaction send status");
           return result;
         });
+  }
+
+  /** Stable queue choice. An already ordered list is not copied. */
+  static MessageQueue orderedQueue(List<MessageQueue> queues, Object key) {
+    if (queues == null || queues.isEmpty()) throw new IllegalStateException("No writable queues");
+    int index = Math.floorMod(key.hashCode(), queues.size());
+    if (ordered(queues)) return queues.get(index);
+    var copy = new java.util.ArrayList<>(queues);
+    copy.sort(QUEUE_ORDER);
+    return copy.get(index);
+  }
+
+  private static boolean ordered(List<MessageQueue> queues) {
+    for (int i = 1; i < queues.size(); i++)
+      if (QUEUE_ORDER.compare(queues.get(i - 1), queues.get(i)) > 0) return false;
+    return true;
   }
 
   /**
