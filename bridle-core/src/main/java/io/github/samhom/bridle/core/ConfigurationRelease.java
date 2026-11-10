@@ -8,6 +8,8 @@ import java.util.Objects;
  * Authenticated deployment control supplies instance IDs. Rollout selection is not authorization.
  */
 public final class ConfigurationRelease<S> {
+  private static final ThreadLocal<MessageDigest> SHA_256 =
+      ThreadLocal.withInitial(ConfigurationRelease::sha256);
   private final ConfigSnapshot<S> snapshot;
   private final long expectedRevision;
   private final String rollout;
@@ -35,14 +37,19 @@ public final class ConfigurationRelease<S> {
 
   public boolean targets(String instanceId) {
     Limits.name(instanceId);
+    MessageDigest digest = SHA_256.get();
+    digest.reset();
+    byte[] bytes =
+        digest.digest(
+            (rollout + "\n" + snapshot.resource() + "\n" + instanceId)
+                .getBytes(StandardCharsets.UTF_8));
+    int bucket = ((bytes[0] & 255) << 8 | (bytes[1] & 255)) * 100 / 65536;
+    return bucket < percent;
+  }
+
+  private static MessageDigest sha256() {
     try {
-      byte[] bytes =
-          MessageDigest.getInstance("SHA-256")
-              .digest(
-                  (rollout + "\n" + snapshot.resource() + "\n" + instanceId)
-                      .getBytes(StandardCharsets.UTF_8));
-      int bucket = ((bytes[0] & 255) << 8 | (bytes[1] & 255)) * 100 / 65536;
-      return bucket < percent;
+      return MessageDigest.getInstance("SHA-256");
     } catch (NoSuchAlgorithmException impossible) {
       throw new IllegalStateException(impossible);
     }
