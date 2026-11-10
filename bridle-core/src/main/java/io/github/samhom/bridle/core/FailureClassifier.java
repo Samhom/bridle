@@ -6,13 +6,12 @@ public final class FailureClassifier {
 
   public static Throwable unwrap(Throwable error) {
     Throwable current = java.util.Objects.requireNonNull(error);
-    java.util.Set<Throwable> visited =
-        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Throwable, Boolean>());
-    for (int depth = 0; depth < 32 && visited.add(current); depth++) {
+    for (int depth = 0; depth < 32; depth++) {
       if (!(current instanceof java.util.concurrent.CompletionException)
-          && !(current instanceof java.util.concurrent.ExecutionException)) break;
-      if (current.getCause() == null || visited.contains(current.getCause())) break;
-      current = current.getCause();
+          && !(current instanceof java.util.concurrent.ExecutionException)) return current;
+      Throwable cause = current.getCause();
+      if (cause == null || cause == current) return current;
+      current = cause;
     }
     return current;
   }
@@ -47,11 +46,7 @@ public final class FailureClassifier {
     Throwable current = unwrap(error);
     if (current instanceof IllegalArgumentException) return ClientException.Kind.INVALID_REQUEST;
     ClientException.Kind found = ClientException.Kind.DRIVER_FAILURE;
-    java.util.Set<Throwable> visited =
-        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Throwable, Boolean>());
-    for (int depth = 0;
-        current != null && depth < 32 && visited.add(current);
-        depth++, current = current.getCause()) {
+    for (int depth = 0; current != null && depth < 32; depth++) {
       if (current instanceof javax.net.ssl.SSLException) return ClientException.Kind.TLS_FAILURE;
       if (current instanceof java.net.ConnectException
           || current instanceof java.net.UnknownHostException
@@ -63,6 +58,9 @@ public final class FailureClassifier {
       else if (current instanceof java.io.IOException
           && found == ClientException.Kind.DRIVER_FAILURE)
         found = uncertain(operation, ClientException.Kind.UNAVAILABLE);
+      Throwable cause = current.getCause();
+      if (cause == current) break;
+      current = cause;
     }
     return found;
   }
