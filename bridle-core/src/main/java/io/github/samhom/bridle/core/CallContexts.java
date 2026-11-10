@@ -11,6 +11,8 @@ public final class CallContexts {
 
   private static final ThreadLocal<Frame> CURRENT = new ThreadLocal<>();
   private static final Map<String, String> EMPTY = Collections.emptyMap();
+  private static final java.util.regex.Pattern KEY =
+      java.util.regex.Pattern.compile("[A-Za-z][A-Za-z0-9_.-]{0,63}");
   static final ContextPropagation.Snapshot EMPTY_CAPTURE = () -> enter(EMPTY);
 
   private static final class Frame {
@@ -35,7 +37,7 @@ public final class CallContexts {
     trustedMetadata.forEach(
         (key, value) -> {
           if (key == null
-              || !key.matches("[A-Za-z][A-Za-z0-9_.-]{0,63}")
+              || !KEY.matcher(key).matches()
               || value == null
               || value.length() > 512
               || value.indexOf('\r') >= 0

@@ -11,6 +11,8 @@ import java.util.function.Function;
 
 /** One atomic document per resource avoids torn reads of independently updated property keys. */
 public final class ApolloConfigurationSource<S> implements ConfigurationSource<S>, AutoCloseable {
+  private static final java.util.regex.Pattern KEY =
+      java.util.regex.Pattern.compile("[A-Za-z0-9_.-]{1,128}");
   private final Config config;
   private final String key;
   private final Function<String, ConfigSnapshot<S>> decoder;
@@ -22,7 +24,7 @@ public final class ApolloConfigurationSource<S> implements ConfigurationSource<S
   public ApolloConfigurationSource(
       Config config, String key, Function<String, ConfigSnapshot<S>> decoder) {
     this.config = Objects.requireNonNull(config, "config");
-    if (key == null || !key.matches("[A-Za-z0-9_.-]{1,128}"))
+    if (key == null || !KEY.matcher(key).matches())
       throw new IllegalArgumentException("Invalid configuration key");
     this.key = key;
     this.decoder = Objects.requireNonNull(decoder, "decoder");

@@ -13,6 +13,9 @@ import java.util.concurrent.CompletableFuture;
  * facade.
  */
 public final class ManagedSearch {
+  private static final java.util.regex.Pattern INDEX =
+      java.util.regex.Pattern.compile("[a-z0-9][a-z0-9_.-]{0,127}");
+
   public static final class PartialBulkFailure extends RuntimeException {
     private final BulkResponse response;
 
@@ -40,7 +43,7 @@ public final class ManagedSearch {
   }
 
   private static void index(String value) {
-    if (value == null || !value.matches("[a-z0-9][a-z0-9_.-]{0,127}"))
+    if (value == null || !INDEX.matcher(value).matches())
       throw new IllegalArgumentException("Invalid index or alias");
   }
 

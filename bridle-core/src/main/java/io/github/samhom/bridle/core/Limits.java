@@ -2,8 +2,11 @@ package io.github.samhom.bridle.core;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public final class Limits {
+  private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}");
+
   private Limits() {}
 
   public static Duration timeout(Duration value) {
@@ -20,7 +23,7 @@ public final class Limits {
   }
 
   public static String name(String value) {
-    if (value == null || !value.matches("[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}"))
+    if (value == null || !NAME.matcher(value).matches())
       throw new IllegalArgumentException("Invalid resource name");
     return value;
   }
@@ -70,8 +73,7 @@ public final class Limits {
     if (current <= 0x7F) return 1;
     if (current <= 0x7FF) return 2;
     if (Character.isHighSurrogate(current)) {
-      if (index + 1 < value.length() && Character.isLowSurrogate(value.charAt(index + 1)))
-        return 4;
+      if (index + 1 < value.length() && Character.isLowSurrogate(value.charAt(index + 1))) return 4;
       return 1;
     }
     if (Character.isLowSurrogate(current)) return 1;

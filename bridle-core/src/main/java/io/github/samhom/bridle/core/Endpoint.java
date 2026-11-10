@@ -1,9 +1,13 @@
 package io.github.samhom.bridle.core;
 
 import java.net.URI;
+import java.util.regex.Pattern;
 
 /** Endpoints must come from an authorized resource catalog. This is not a generic URL fetcher. */
 public final class Endpoint {
+  private static final Pattern DNS = Pattern.compile("[A-Za-z0-9][A-Za-z0-9.-]*");
+  private static final Pattern IPV6 = Pattern.compile("[0-9A-Fa-f:]{2,45}");
+
   private final String host;
   private final int port;
   private final boolean tls;
@@ -13,7 +17,7 @@ public final class Endpoint {
         || host.length() > 253
         || host.endsWith(".")
         || host.contains("..")
-        || !(host.matches("[A-Za-z0-9][A-Za-z0-9.-]*") || host.matches("[0-9A-Fa-f:]{2,45}")))
+        || !(DNS.matcher(host).matches() || IPV6.matcher(host).matches()))
       throw new IllegalArgumentException("Invalid endpoint host");
     if (port < 1 || port > 65535) throw new IllegalArgumentException("Invalid endpoint port");
     this.host = host;

@@ -9,11 +9,10 @@ public interface CredentialsProvider {
   Credentials resolve();
 
   static CredentialsProvider environment(String usernameVariable, String passwordVariable) {
-    Pattern name = Pattern.compile("[A-Z][A-Z0-9_]{0,127}");
     if (usernameVariable == null
         || passwordVariable == null
-        || !name.matcher(usernameVariable).matches()
-        || !name.matcher(passwordVariable).matches())
+        || !CredentialNames.NAME.matcher(usernameVariable).matches()
+        || !CredentialNames.NAME.matcher(passwordVariable).matches())
       throw new IllegalArgumentException("Invalid credential environment variable name");
     return () -> {
       String username = System.getenv(usernameVariable);
@@ -28,4 +27,10 @@ public interface CredentialsProvider {
       }
     };
   }
+}
+
+final class CredentialNames {
+  static final Pattern NAME = Pattern.compile("[A-Z][A-Z0-9_]{0,127}");
+
+  private CredentialNames() {}
 }

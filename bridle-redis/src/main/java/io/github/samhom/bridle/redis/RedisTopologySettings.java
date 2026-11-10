@@ -17,6 +17,9 @@ public record RedisTopologySettings(
     Duration readTimeout,
     int maxConnections)
     implements ImmutableSettings {
+  private static final java.util.regex.Pattern MASTER =
+      java.util.regex.Pattern.compile("[A-Za-z0-9_.-]{1,128}");
+
   public enum Mode {
     SENTINEL,
     CLUSTER
@@ -31,8 +34,7 @@ public record RedisTopologySettings(
     Limits.timeout(connectTimeout);
     Limits.timeout(readTimeout);
     Limits.count(maxConnections, 128);
-    if (mode == Mode.SENTINEL
-        && (masterName == null || !masterName.matches("[A-Za-z0-9_.-]{1,128}")))
+    if (mode == Mode.SENTINEL && (masterName == null || !MASTER.matcher(masterName).matches()))
       throw new IllegalArgumentException("Invalid Sentinel master name");
     boolean tls = seeds.iterator().next().tls();
     if (seeds.stream().anyMatch(seed -> seed.tls() != tls))
