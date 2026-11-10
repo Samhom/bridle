@@ -76,6 +76,23 @@ class ContextPropagationTest {
   }
 
   @Test
+  void emptyCaptureIsSharedAndHidesAForeignFrame() {
+    assertSame(CallContexts.capture(), CallContexts.capture());
+    assertSame(ContextPropagation.NONE.capture(), ContextPropagation.NONE.capture());
+    assertSame(
+        ContextPropagation.combine(CallContexts::capture, ContextPropagation.NONE).capture(),
+        CallContexts.capture());
+    ContextPropagation.Snapshot captured = CallContexts.capture();
+    try (ContextPropagation.Scope ignored = CallContexts.open(Map.of("request", "foreign"))) {
+      try (ContextPropagation.Scope nested = captured.open()) {
+        assertTrue(CallContexts.current().isEmpty());
+      }
+      assertEquals("foreign", CallContexts.current().get("request"));
+    }
+    assertTrue(CallContexts.current().isEmpty());
+  }
+
+  @Test
   void compositionRollsBackPartialOpenAndRejectsMutableOrUnboundedMetadata() {
     ThreadLocal<String> value = new ThreadLocal<>();
     ContextPropagation first =

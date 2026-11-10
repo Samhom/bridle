@@ -10,6 +10,8 @@ public final class CallContexts {
   private CallContexts() {}
 
   private static final ThreadLocal<Frame> CURRENT = new ThreadLocal<>();
+  private static final Map<String, String> EMPTY = Collections.emptyMap();
+  static final ContextPropagation.Snapshot EMPTY_CAPTURE = () -> enter(EMPTY);
 
   private static final class Frame {
     final Map<String, String> values;
@@ -66,6 +68,11 @@ public final class CallContexts {
 
   public static ContextPropagation.Snapshot capture() {
     Map<String, String> values = current();
+    if (values.isEmpty()) return EMPTY_CAPTURE;
     return () -> enter(values);
+  }
+
+  static ContextPropagation.Snapshot emptyCapture() {
+    return EMPTY_CAPTURE;
   }
 }
