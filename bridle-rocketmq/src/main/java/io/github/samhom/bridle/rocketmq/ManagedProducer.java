@@ -14,11 +14,19 @@ public final class ManagedProducer {
       Comparator.comparing(MessageQueue::getBrokerName).thenComparingInt(MessageQueue::getQueueId);
   private final ManagedClient<DefaultMQProducer, RocketMqSettings> client;
   private final Duration timeout;
+  private final Operation sendCommand;
+  private final Operation orderedSendCommand;
+  private final Operation batchCommand;
+  private final Operation transactionCommand;
 
   public ManagedProducer(
       ManagedClient<DefaultMQProducer, RocketMqSettings> client, Duration timeout) {
     this.client = java.util.Objects.requireNonNull(client);
     this.timeout = Limits.timeout(timeout);
+    sendCommand = Operation.write("send", this.timeout);
+    orderedSendCommand = Operation.write("send.ordered", this.timeout);
+    batchCommand = Operation.write("send.batch", this.timeout);
+    transactionCommand = Operation.write("send.transaction", this.timeout);
   }
 
   public record Outbound(byte[] body, String businessKey) {
@@ -60,7 +68,7 @@ public final class ManagedProducer {
 
   private CompletableFuture<SendResult> sendOne(Outbound outbound, int delay, String orderingKey) {
     return client.executeAsync(
-        Operation.write(orderingKey == null ? "send" : "send.ordered", timeout),
+        orderingKey == null ? sendCommand : orderedSendCommand,
         (producer, context) -> {
           RocketMqSettings settings = context.settings(RocketMqSettings.class);
           Message message = message(outbound, settings);
@@ -90,7 +98,7 @@ public final class ManagedProducer {
     }
     var copy = java.util.List.copyOf(values);
     return client.executeAsync(
-        Operation.write("send.batch", timeout),
+        batchCommand,
         (producer, context) -> {
           var settings = context.settings(RocketMqSettings.class);
           var messages = new java.util.ArrayList<Message>();
@@ -113,7 +121,7 @@ public final class ManagedProducer {
   public TransactionSendResult sendTransaction(byte[] body, String businessKey, Object argument) {
     Outbound value = new Outbound(body, businessKey);
     return client.execute(
-        Operation.write("send.transaction", timeout),
+        transactionCommand,
         (producer, context) -> {
           if (!(producer instanceof TransactionMQProducer transactional))
             throw new IllegalStateException(

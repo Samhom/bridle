@@ -17,6 +17,12 @@ public final class ManagedDocuments {
   private final String bucket, scope, collection;
   private final Duration timeout;
   private final int maximum;
+  private final Operation getCommand;
+  private final Operation upsertCommand;
+  private final Operation replaceCommand;
+  private final Operation lookupCommand;
+  private final Operation mutateCommand;
+  private final Operation transactionCommand;
 
   public ManagedDocuments(
       ManagedClient<Cluster, CouchbaseSettings> client, CouchbaseSettings settings) {
@@ -26,6 +32,12 @@ public final class ManagedDocuments {
     collection = settings.collection();
     timeout = settings.operationTimeout();
     maximum = settings.maxDocumentBytes();
+    getCommand = Operation.read("get", timeout);
+    upsertCommand = Operation.write("upsert", timeout);
+    replaceCommand = Operation.write("replace", timeout);
+    lookupCommand = Operation.read("lookupIn", timeout);
+    mutateCommand = Operation.write("mutateIn", timeout);
+    transactionCommand = Operation.write("transaction", timeout);
   }
 
   private static void key(String key) {
@@ -44,7 +56,7 @@ public final class ManagedDocuments {
   public CompletableFuture<Document> getAsync(String key) {
     key(key);
     return client.executeAsync(
-        Operation.read("get", timeout),
+        getCommand,
         (cluster, context) ->
             cluster
                 .bucket(bucket)
@@ -101,7 +113,7 @@ public final class ManagedDocuments {
     key(key);
     byte[] value = DocumentJson.encodeJson(json, maximum);
     return client.executeAsync(
-        Operation.write("upsert", timeout),
+        upsertCommand,
         (cluster, context) -> {
           Limits.bytes(
               value,
@@ -131,7 +143,7 @@ public final class ManagedDocuments {
     key(key);
     byte[] value = DocumentJson.encodeJson(json, maximum);
     return client.executeAsync(
-        Operation.write("replace", timeout),
+        replaceCommand,
         (cluster, context) -> {
           Limits.bytes(
               value,
@@ -174,7 +186,7 @@ public final class ManagedDocuments {
     java.util.List<LookupInSpec> specs =
         copy.stream().map(LookupInSpec::get).map(spec -> (LookupInSpec) spec).toList();
     return client.executeAsync(
-        Operation.read("lookupIn", timeout),
+        lookupCommand,
         (cluster, context) ->
             collection(cluster)
                 .lookupIn(
@@ -209,7 +221,7 @@ public final class ManagedDocuments {
     }
     final long size = bytes;
     return client.executeAsync(
-        Operation.write("mutateIn", timeout),
+        mutateCommand,
         (cluster, context) -> {
           if (size > context.settings(CouchbaseSettings.class).maxDocumentBytes())
             throw new IllegalArgumentException("Subdocument byte budget exceeded");
@@ -238,7 +250,7 @@ public final class ManagedDocuments {
     if (durability == com.couchbase.client.core.msg.kv.DurabilityLevel.NONE)
       throw new IllegalArgumentException("Transactions require durability");
     return client.execute(
-        Operation.write("transaction", timeout),
+        transactionCommand,
         (cluster, context) ->
             cluster
                 .transactions()

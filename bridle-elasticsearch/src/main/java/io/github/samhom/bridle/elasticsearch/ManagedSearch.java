@@ -32,6 +32,13 @@ public final class ManagedSearch {
   private final ManagedClient<ElasticsearchClient, ElasticsearchSettings> client;
   private final Duration timeout;
   private final int maximumBatch, maximumDocument;
+  private final Operation getCommand;
+  private final Operation indexCommand;
+  private final Operation deleteCommand;
+  private final Operation bulkCommand;
+  private final Operation searchCommand;
+  private final Operation openPitCommand;
+  private final Operation pagePitCommand;
 
   public ManagedSearch(
       ManagedClient<ElasticsearchClient, ElasticsearchSettings> client,
@@ -40,6 +47,13 @@ public final class ManagedSearch {
     timeout = settings.readTimeout();
     maximumBatch = settings.maxBatchItems();
     maximumDocument = settings.maxDocumentBytes();
+    getCommand = Operation.read("get", timeout);
+    indexCommand = Operation.write("index", timeout);
+    deleteCommand = Operation.write("delete", timeout);
+    bulkCommand = Operation.write("bulk", timeout);
+    searchCommand = Operation.read("search", timeout);
+    openPitCommand = Operation.read("pit.open", timeout);
+    pagePitCommand = Operation.read("pit.page", timeout);
   }
 
   private static void index(String value) {
@@ -53,11 +67,11 @@ public final class ManagedSearch {
   }
 
   public GetResponse<JsonData> get(String index, String id) {
-    return client.executeAwait(Operation.read("get", timeout), getCall(index, id));
+    return client.executeAwait(getCommand, getCall(index, id));
   }
 
   public CompletableFuture<GetResponse<JsonData>> getAsync(String index, String id) {
-    return client.executeAsync(Operation.read("get", timeout), getCall(index, id));
+    return client.executeAsync(getCommand, getCall(index, id));
   }
 
   private AsyncCall<ElasticsearchClient, GetResponse<JsonData>> getCall(String index, String id) {
@@ -68,11 +82,11 @@ public final class ManagedSearch {
   }
 
   public IndexResponse index(String index, String id, String json) {
-    return client.executeAwait(Operation.write("index", timeout), indexCall(index, id, json));
+    return client.executeAwait(indexCommand, indexCall(index, id, json));
   }
 
   public CompletableFuture<IndexResponse> indexAsync(String index, String id, String json) {
-    return client.executeAsync(Operation.write("index", timeout), indexCall(index, id, json));
+    return client.executeAsync(indexCommand, indexCall(index, id, json));
   }
 
   private AsyncCall<ElasticsearchClient, IndexResponse> indexCall(
@@ -92,11 +106,11 @@ public final class ManagedSearch {
   }
 
   public DeleteResponse delete(String index, String id) {
-    return client.executeAwait(Operation.write("delete", timeout), deleteCall(index, id));
+    return client.executeAwait(deleteCommand, deleteCall(index, id));
   }
 
   public CompletableFuture<DeleteResponse> deleteAsync(String index, String id) {
-    return client.executeAsync(Operation.write("delete", timeout), deleteCall(index, id));
+    return client.executeAsync(deleteCommand, deleteCall(index, id));
   }
 
   private AsyncCall<ElasticsearchClient, DeleteResponse> deleteCall(String index, String id) {
@@ -107,11 +121,11 @@ public final class ManagedSearch {
   }
 
   public BulkResponse bulk(BulkRequest request) {
-    return client.executeAwait(Operation.write("bulk", timeout), bulkCall(request));
+    return client.executeAwait(bulkCommand, bulkCall(request));
   }
 
   public CompletableFuture<BulkResponse> bulkAsync(BulkRequest request) {
-    return client.executeAsync(Operation.write("bulk", timeout), bulkCall(request));
+    return client.executeAsync(bulkCommand, bulkCall(request));
   }
 
   private AsyncCall<ElasticsearchClient, BulkResponse> bulkCall(BulkRequest request) {
@@ -150,12 +164,12 @@ public final class ManagedSearch {
   }
 
   public <T> SearchResponse<T> search(SearchRequest request, Class<T> type) {
-    return client.executeAwait(Operation.read("search", timeout), searchCall(request, type));
+    return client.executeAwait(searchCommand, searchCall(request, type));
   }
 
   public <T> CompletableFuture<SearchResponse<T>> searchAsync(
       SearchRequest request, Class<T> type) {
-    return client.executeAsync(Operation.read("search", timeout), searchCall(request, type));
+    return client.executeAsync(searchCommand, searchCall(request, type));
   }
 
   private <T> AsyncCall<ElasticsearchClient, SearchResponse<T>> searchCall(
@@ -214,7 +228,7 @@ public final class ManagedSearch {
     try {
       client.executeAwait(
           ownership.lease,
-          Operation.read("pit.open", timeout),
+          openPitCommand,
           (nativeClient, context) ->
               ownership.track(
                   () ->
@@ -357,7 +371,7 @@ public final class ManagedSearch {
       try {
         return client.executeAwait(
             ownership.lease,
-            Operation.read("pit.page", timeout),
+            pagePitCommand,
             (nativeClient, context) ->
                 ownership.track(
                     () -> async(nativeClient, context).search(page, type), SearchResponse::pitId));

@@ -14,6 +14,10 @@ public final class ManagedTopologyRedis {
   private final ManagedClient<UnifiedJedis, RedisTopologySettings> client;
   private final Duration timeout;
   private final int maxValueBytes;
+  private final Operation getCommand;
+  private final Operation setCommand;
+  private final Operation incrementCommand;
+  private final Operation deleteCommand;
 
   public ManagedTopologyRedis(
       ManagedClient<UnifiedJedis, RedisTopologySettings> client,
@@ -22,6 +26,10 @@ public final class ManagedTopologyRedis {
     this.client = Objects.requireNonNull(client);
     this.timeout = Limits.timeout(timeout);
     this.maxValueBytes = Limits.count(maxValueBytes, 16 * 1024 * 1024);
+    getCommand = Operation.read("get", this.timeout);
+    setCommand = Operation.write("set", this.timeout);
+    incrementCommand = Operation.write("incr", this.timeout);
+    deleteCommand = Operation.write("del", this.timeout);
   }
 
   private static void key(String key) {
@@ -32,7 +40,7 @@ public final class ManagedTopologyRedis {
   public String get(String key) {
     key(key);
     return client.execute(
-        Operation.read("get", timeout),
+        getCommand,
         (nativeClient, context) -> TopologyCallBudget.call(context, () -> nativeClient.get(key)));
   }
 
@@ -44,7 +52,7 @@ public final class ManagedTopologyRedis {
         || ttl.compareTo(Duration.ofDays(3650)) > 0)
       throw new IllegalArgumentException("TTL out of bounds");
     client.execute(
-        Operation.write("set", timeout),
+        setCommand,
         (nativeClient, context) ->
             TopologyCallBudget.call(
                 context,
@@ -54,14 +62,14 @@ public final class ManagedTopologyRedis {
   public long increment(String key) {
     key(key);
     return client.execute(
-        Operation.write("incr", timeout),
+        incrementCommand,
         (nativeClient, context) -> TopologyCallBudget.call(context, () -> nativeClient.incr(key)));
   }
 
   public long delete(String key) {
     key(key);
     return client.execute(
-        Operation.write("del", timeout),
+        deleteCommand,
         (nativeClient, context) -> TopologyCallBudget.call(context, () -> nativeClient.del(key)));
   }
 

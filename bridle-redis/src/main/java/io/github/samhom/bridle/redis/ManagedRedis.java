@@ -9,12 +9,28 @@ public final class ManagedRedis {
   private final ManagedClient<RedisClient, RedisSettings> client;
   private final Duration timeout;
   private final int maxValueBytes;
+  private final Operation getCommand;
+  private final Operation setCommand;
+  private final Operation incrementCommand;
+  private final Operation deleteCommand;
+  private final Operation getAllCommand;
+  private final Operation evalCommand;
+  private final Operation transactionSetCommand;
+  private final Operation pipelineSetCommand;
 
   public ManagedRedis(
       ManagedClient<RedisClient, RedisSettings> client, Duration timeout, int maxValueBytes) {
     this.client = java.util.Objects.requireNonNull(client);
     this.timeout = Limits.timeout(timeout);
     this.maxValueBytes = Limits.count(maxValueBytes, 16 * 1024 * 1024);
+    getCommand = Operation.read("get", this.timeout);
+    setCommand = Operation.write("set", this.timeout);
+    incrementCommand = Operation.write("incr", this.timeout);
+    deleteCommand = Operation.write("del", this.timeout);
+    getAllCommand = Operation.read("mget", this.timeout);
+    evalCommand = Operation.write("eval", this.timeout);
+    transactionSetCommand = Operation.write("transaction.set", this.timeout);
+    pipelineSetCommand = Operation.write("pipeline.set", this.timeout);
   }
 
   private static void key(String key) {
@@ -25,7 +41,7 @@ public final class ManagedRedis {
   public String get(String key) {
     key(key);
     return client.execute(
-        Operation.read("get", timeout),
+        getCommand,
         (nativeClient, context) ->
             RedisCallBudget.execute(nativeClient, context, jedis -> jedis.get(key)));
   }
@@ -38,7 +54,7 @@ public final class ManagedRedis {
         || ttl.compareTo(Duration.ofDays(3650)) > 0)
       throw new IllegalArgumentException("TTL out of bounds");
     client.execute(
-        Operation.write("set", timeout),
+        setCommand,
         (nativeClient, context) -> {
           Limits.utf8(
               value,
@@ -53,7 +69,7 @@ public final class ManagedRedis {
   public long increment(String key) {
     key(key);
     return client.execute(
-        Operation.write("incr", timeout),
+        incrementCommand,
         (nativeClient, context) ->
             RedisCallBudget.execute(nativeClient, context, jedis -> jedis.incr(key)));
   }
@@ -61,7 +77,7 @@ public final class ManagedRedis {
   public long delete(String key) {
     key(key);
     return client.execute(
-        Operation.write("del", timeout),
+        deleteCommand,
         (nativeClient, context) ->
             RedisCallBudget.execute(nativeClient, context, jedis -> jedis.del(key)));
   }
@@ -72,7 +88,7 @@ public final class ManagedRedis {
     Limits.count(copy.size(), 1000);
     copy.forEach(ManagedRedis::key);
     return client.execute(
-        Operation.read("mget", timeout),
+        getAllCommand,
         (nativeClient, context) ->
             RedisCallBudget.execute(
                 nativeClient, context, jedis -> jedis.mget(copy.toArray(String[]::new))));
@@ -95,7 +111,7 @@ public final class ManagedRedis {
     }
     final long bytes = total;
     return client.execute(
-        Operation.write("eval", timeout),
+        evalCommand,
         (nativeClient, context) -> {
           if (bytes > context.settings(RedisSettings.class).maxValueBytes())
             throw new IllegalArgumentException("Script argument budget exceeded");
@@ -119,7 +135,7 @@ public final class ManagedRedis {
     }
     if (bytes > 16 * 1024 * 1024) throw new IllegalArgumentException("Batch byte budget exceeded");
     return client.execute(
-        Operation.write(transaction ? "transaction.set" : "pipeline.set", timeout),
+        transaction ? transactionSetCommand : pipelineSetCommand,
         (nativeClient, context) ->
             RedisCallBudget.execute(
                 nativeClient,
