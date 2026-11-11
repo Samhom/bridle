@@ -9,11 +9,15 @@ public final class ResourceId {
   private final String application;
   private final String environment;
   private final String alias;
+  private final int hash;
+  private final String text;
 
   public ResourceId(String application, String environment, String alias) {
     this.application = component(application);
     this.environment = component(environment);
     this.alias = component(alias);
+    this.hash = Objects.hash(this.application, this.environment, this.alias);
+    this.text = this.application + "/" + this.environment + "/" + this.alias;
   }
 
   private static String component(String value) {
@@ -36,20 +40,22 @@ public final class ResourceId {
 
   @Override
   public boolean equals(Object other) {
+    if (other == this) return true;
     if (!(other instanceof ResourceId)) return false;
     ResourceId that = (ResourceId) other;
-    return application.equals(that.application)
+    return hash == that.hash
+        && application.equals(that.application)
         && environment.equals(that.environment)
         && alias.equals(that.alias);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(application, environment, alias);
+    return hash;
   }
 
   @Override
   public String toString() {
-    return application + "/" + environment + "/" + alias;
+    return text;
   }
 }
