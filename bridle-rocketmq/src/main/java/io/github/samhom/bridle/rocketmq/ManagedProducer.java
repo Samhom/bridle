@@ -67,7 +67,7 @@ public final class ManagedProducer {
           if (delay > 0) message.setDelayTimeLevel(delay);
           CompletableFuture<SendResult> completion = new CompletableFuture<>();
           SendCallback callback = callback(completion);
-          long remaining = sendTimeoutMillis(context.remaining());
+          long remaining = sendTimeoutMillis(context.remainingNanos());
           if (orderingKey == null) producer.send(message, callback, remaining);
           else
             producer.send(
@@ -100,7 +100,8 @@ public final class ManagedProducer {
           Limits.bytes(encoded, settings.maxMessageBytes());
           context.checkDeadline();
           CompletableFuture<SendResult> completion = new CompletableFuture<>();
-          producer.send(messages, callback(completion), sendTimeoutMillis(context.remaining()));
+          producer.send(
+              messages, callback(completion), sendTimeoutMillis(context.remainingNanos()));
           return completion;
         });
   }
@@ -150,7 +151,11 @@ public final class ManagedProducer {
    * millisecond.
    */
   static int sendTimeoutMillis(Duration remaining) {
-    return CallContext.millisWithin(remaining.toNanos());
+    return sendTimeoutMillis(remaining.toNanos());
+  }
+
+  static int sendTimeoutMillis(long remainingNanos) {
+    return CallContext.millisWithin(remainingNanos);
   }
 
   private static Message message(Outbound value, RocketMqSettings settings) {

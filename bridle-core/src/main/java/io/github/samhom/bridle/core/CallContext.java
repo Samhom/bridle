@@ -4,6 +4,7 @@ import java.time.Duration;
 
 /** A single deadline is shared with the adapter and all native attempts. */
 public final class CallContext {
+  private static final Duration TEN_MINUTES = Duration.ofMinutes(10);
   private long deadline;
   private final long started;
   private Object settings;
@@ -21,7 +22,7 @@ public final class CallContext {
 
   void limitTo(Duration timeout) {
     java.util.Objects.requireNonNull(timeout);
-    if (timeout.isNegative() || timeout.isZero() || timeout.compareTo(Duration.ofMinutes(10)) > 0)
+    if (timeout.isNegative() || timeout.isZero() || timeout.compareTo(TEN_MINUTES) > 0)
       throw new IllegalArgumentException("Invalid operation ceiling");
     deadline = Math.min(deadline, started + timeout.toNanos());
   }
@@ -55,8 +56,13 @@ public final class CallContext {
     return type.cast(settings);
   }
 
+  /** Non-negative nanoseconds until the deadline. */
+  public long remainingNanos() {
+    return Math.max(0, deadline - System.nanoTime());
+  }
+
   public Duration remaining() {
-    return Duration.ofNanos(Math.max(0, deadline - System.nanoTime()));
+    return Duration.ofNanos(remainingNanos());
   }
 
   /**
@@ -65,8 +71,10 @@ public final class CallContext {
    * and zero is never converted into an infinite native timeout.
    */
   public int remainingMillis(Duration ceiling) {
-    checkDeadline();
-    long nanos = Math.min(remaining().toNanos(), Limits.timeout(ceiling).toNanos());
+    long nanos = remainingNanos();
+    if (nanos == 0)
+      throw new ClientException(ClientException.Kind.TIMEOUT, "Operation deadline exceeded");
+    nanos = Math.min(nanos, Limits.timeout(ceiling).toNanos());
     return millisWithin(nanos);
   }
 
@@ -79,7 +87,7 @@ public final class CallContext {
   }
 
   public void checkDeadline() {
-    if (remaining().isZero())
+    if (deadline - System.nanoTime() <= 0)
       throw new ClientException(ClientException.Kind.TIMEOUT, "Operation deadline exceeded");
   }
 }

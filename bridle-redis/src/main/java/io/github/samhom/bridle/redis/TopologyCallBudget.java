@@ -3,30 +3,25 @@ package io.github.samhom.bridle.redis;
 import io.github.samhom.bridle.core.*;
 import java.time.Duration;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
+import java.util.function.LongSupplier;
 
 /** One monotonic budget covers native borrowing, authentication and every redirect hop. */
 final class TopologyCallBudget {
-  private static final ThreadLocal<Supplier<Duration>> CURRENT = new ThreadLocal<>();
+  private static final ThreadLocal<LongSupplier> CURRENT = new ThreadLocal<>();
 
   static <T> T call(CallContext context, Callable<T> action) throws Exception {
-    return scoped(context::remaining, action);
+    return scoped(context::remainingNanos, action);
   }
 
   static <T> T call(Duration timeout, Callable<T> action) throws Exception {
     long deadline = System.nanoTime() + Limits.timeout(timeout).toNanos();
-    return scoped(() -> Duration.ofNanos(Math.max(0, deadline - System.nanoTime())), action);
+    return scoped(() -> Math.max(0, deadline - System.nanoTime()), action);
   }
 
-  private static <T> T scoped(Supplier<Duration> remaining, Callable<T> action) throws Exception {
-    Supplier<Duration> previous = CURRENT.get();
+  private static <T> T scoped(LongSupplier remaining, Callable<T> action) throws Exception {
+    LongSupplier previous = CURRENT.get();
     CURRENT.set(
-        previous == null
-            ? remaining
-            : () -> {
-              Duration old = previous.get(), next = remaining.get();
-              return old.compareTo(next) < 0 ? old : next;
-            });
+        previous == null ? remaining : () -> Math.min(previous.getAsLong(), remaining.getAsLong()));
     try {
       return action.call();
     } finally {
@@ -36,9 +31,9 @@ final class TopologyCallBudget {
   }
 
   static int millis(Duration configured) {
-    Supplier<Duration> budget = CURRENT.get();
+    LongSupplier budget = CURRENT.get();
     long nanos = configured.toNanos();
-    if (budget != null) nanos = Math.min(nanos, budget.get().toNanos());
+    if (budget != null) nanos = Math.min(nanos, budget.getAsLong());
     return CallContext.millisWithin(nanos);
   }
 }

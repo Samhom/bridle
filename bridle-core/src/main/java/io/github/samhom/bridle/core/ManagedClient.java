@@ -809,7 +809,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
           if (terminal) return;
           deadline =
               runtime.timers.schedule(
-                  this::expire, Math.max(1, context.remaining().toNanos()), TimeUnit.NANOSECONDS);
+                  this::expire, Math.max(1, context.remainingNanos()), TimeUnit.NANOSECONDS);
           callExecutor.execute(task);
         }
       } catch (RejectedExecutionException rejected) {
