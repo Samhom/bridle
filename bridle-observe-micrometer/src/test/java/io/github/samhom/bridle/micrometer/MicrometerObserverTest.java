@@ -44,9 +44,12 @@ class MicrometerObserverTest {
               .start(RESOURCE, "redis", Operation.read("get", Duration.ofSeconds(1)), 1);
       observation.finish(Observation.Outcome.SUCCESS, 1000000);
       observation.finish(Observation.Outcome.ERROR, 2000000);
+      new MicrometerObserver(registry)
+          .start(RESOURCE, "redis", Operation.read("get", Duration.ofSeconds(1)), 1)
+          .finish(Observation.Outcome.SUCCESS, 1000);
       assertEquals(
-          1, registry.get("bridle.client.operations").tag("outcome", "success").counter().count());
-      assertEquals(1, registry.get("bridle.client.operation.duration").timer().count());
+          2, registry.get("bridle.client.operations").tag("outcome", "success").counter().count());
+      assertEquals(2, registry.get("bridle.client.operation.duration").timer().count());
       assertEquals(2, registry.getMeters().size());
     } finally {
       registry.close();
