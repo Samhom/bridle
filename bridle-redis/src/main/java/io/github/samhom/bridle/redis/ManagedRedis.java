@@ -56,9 +56,9 @@ public final class ManagedRedis {
     client.execute(
         setCommand,
         (nativeClient, context) -> {
-          Limits.utf8(
-              value,
-              Math.min(maxValueBytes, context.settings(RedisSettings.class).maxValueBytes()));
+          int generationMax =
+              Math.min(maxValueBytes, context.settings(RedisSettings.class).maxValueBytes());
+          if (generationMax < maxValueBytes) Limits.utf8(value, generationMax);
           return RedisCallBudget.execute(
               nativeClient,
               context,
@@ -141,11 +141,11 @@ public final class ManagedRedis {
                 nativeClient,
                 context,
                 jedis -> {
-                  for (String value : copy.values())
-                    Limits.utf8(
-                        value,
-                        Math.min(
-                            maxValueBytes, context.settings(RedisSettings.class).maxValueBytes()));
+                  int generationMax =
+                      Math.min(
+                          maxValueBytes, context.settings(RedisSettings.class).maxValueBytes());
+                  if (generationMax < maxValueBytes)
+                    for (String value : copy.values()) Limits.utf8(value, generationMax);
                   context.checkDeadline();
                   if (transaction) {
                     try (redis.clients.jedis.Transaction tx = jedis.multi()) {

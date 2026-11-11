@@ -96,10 +96,10 @@ public final class ManagedSearch {
     Limits.utf8(json, maximumDocument);
     JsonData document = JsonData.fromJson(json);
     return (nativeClient, context) -> {
-      Limits.utf8(
-          json,
+      int generationMax =
           Math.min(
-              maximumDocument, context.settings(ElasticsearchSettings.class).maxDocumentBytes()));
+              maximumDocument, context.settings(ElasticsearchSettings.class).maxDocumentBytes());
+      if (generationMax < maximumDocument) Limits.utf8(json, generationMax);
       return async(nativeClient, context)
           .index(request -> request.index(index).id(id).document(document));
     };
