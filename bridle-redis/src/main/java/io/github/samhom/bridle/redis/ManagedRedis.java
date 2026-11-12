@@ -6,6 +6,8 @@ import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.params.SetParams;
 
 public final class ManagedRedis {
+  private static final Duration MIN_TTL = Duration.ofMillis(1);
+  private static final Duration MAX_TTL = Duration.ofDays(3650);
   private final ManagedClient<RedisClient, RedisSettings> client;
   private final Duration timeout;
   private final int maxValueBytes;
@@ -49,9 +51,7 @@ public final class ManagedRedis {
   public void set(String key, String value, Duration ttl) {
     key(key);
     Limits.utf8(value, maxValueBytes);
-    if (ttl == null
-        || ttl.compareTo(Duration.ofMillis(1)) < 0
-        || ttl.compareTo(Duration.ofDays(3650)) > 0)
+    if (ttl == null || ttl.compareTo(MIN_TTL) < 0 || ttl.compareTo(MAX_TTL) > 0)
       throw new IllegalArgumentException("TTL out of bounds");
     client.execute(
         setCommand,

@@ -6,12 +6,14 @@ import java.util.regex.Pattern;
 
 public final class Limits {
   private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}");
+  private static final Duration ONE_MILLISECOND = Duration.ofMillis(1);
+  private static final Duration TEN_MINUTES = Duration.ofMinutes(10);
 
   private Limits() {}
 
   public static Duration timeout(Duration value) {
     Objects.requireNonNull(value, "timeout");
-    if (value.compareTo(Duration.ofMillis(1)) < 0 || value.compareTo(Duration.ofMinutes(10)) > 0)
+    if (value.compareTo(ONE_MILLISECOND) < 0 || value.compareTo(TEN_MINUTES) > 0)
       throw new IllegalArgumentException("Timeout out of bounds");
     return value;
   }
