@@ -668,7 +668,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     }
   }
 
-  private final class Invocation<T> {
+  private final class Invocation<T> implements Runnable {
     final Operation operation;
     final AsyncCall<C, T> call;
     final ClientSession<C> lease;
@@ -678,8 +678,6 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     final Observation observation;
     final CircuitBreaker.Permit permit;
     final CallFuture<T> result = new CallFuture<>(this::cancel);
-    final Object dispatch = new Object();
-    final Runnable task = this::run;
     ScheduledFuture<?> deadline;
     long queueNanos;
     boolean started, terminal;
@@ -710,7 +708,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
 
     void discardQueued() {
       if (!started) {
-        callExecutor.remove(task);
+        callExecutor.remove(this);
         releasePhysical();
       }
     }
@@ -750,7 +748,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     }
 
     boolean cancel() {
-      synchronized (dispatch) {
+      synchronized (this) {
         if (!select()) return result.isCancelled();
       }
       permit.abandon();
@@ -773,7 +771,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
     void abort() {
       boolean selected;
       Throwable error;
-      synchronized (dispatch) {
+      synchronized (this) {
         error =
             new ClientException(
                 !operation.replaySafe() && started
@@ -789,7 +787,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
 
     void expire() {
       Throwable error;
-      synchronized (dispatch) {
+      synchronized (this) {
         error =
             new ClientException(
                 !operation.replaySafe() && started
@@ -805,12 +803,12 @@ public final class ManagedClient<C, S> implements AutoCloseable {
 
     void submit() {
       try {
-        synchronized (dispatch) {
+        synchronized (this) {
           if (terminal) return;
           deadline =
               runtime.timers.schedule(
                   this::expire, Math.max(1, context.remainingNanos()), TimeUnit.NANOSECONDS);
-          callExecutor.execute(task);
+          callExecutor.execute(this);
         }
       } catch (RejectedExecutionException rejected) {
         finish(
@@ -825,7 +823,7 @@ public final class ManagedClient<C, S> implements AutoCloseable {
 
     void finish(T value, Throwable error, Observation.Outcome outcome) {
       boolean selected;
-      synchronized (dispatch) {
+      synchronized (this) {
         selected = select();
       }
       // Native work has finished: release capacity before any user callback is delivered.
@@ -837,9 +835,9 @@ public final class ManagedClient<C, S> implements AutoCloseable {
       }
     }
 
-    void run() {
+    public void run() {
       try {
-        synchronized (dispatch) {
+        synchronized (this) {
           if (terminal) return;
           context.checkDeadline();
           synchronized (state) {
