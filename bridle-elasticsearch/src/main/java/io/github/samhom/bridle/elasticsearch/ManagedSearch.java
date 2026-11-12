@@ -406,7 +406,10 @@ public final class ManagedSearch {
 
   private static ElasticsearchAsyncClient async(
       ElasticsearchClient client, ElasticsearchSettings settings, Duration ceiling) {
-    return async(client, stage -> stageMillis(ceiling, stage), settings);
+    return clientWithBudgets(
+        client,
+        stageMillis(ceiling, settings.connectTimeout()),
+        stageMillis(ceiling, settings.readTimeout()));
   }
 
   /** Floors the smaller of the generation ceiling and the stage timeout. */
@@ -416,13 +419,15 @@ public final class ManagedSearch {
 
   private static ElasticsearchAsyncClient async(ElasticsearchClient client, CallContext context) {
     // This view borrows the generation's transport. Only the adapter closes that transport.
-    return async(client, context::remainingMillis, context.settings(ElasticsearchSettings.class));
+    ElasticsearchSettings settings = context.settings(ElasticsearchSettings.class);
+    return clientWithBudgets(
+        client,
+        context.remainingMillis(settings.connectTimeout()),
+        context.remainingMillis(settings.readTimeout()));
   }
 
-  private static ElasticsearchAsyncClient async(
-      ElasticsearchClient client,
-      java.util.function.ToIntFunction<Duration> remainingMillis,
-      ElasticsearchSettings settings) {
+  private static ElasticsearchAsyncClient clientWithBudgets(
+      ElasticsearchClient client, int connectMillis, int readMillis) {
     co.elastic.clients.transport.rest5_client.Rest5ClientOptions.Builder options =
         (co.elastic.clients.transport.rest5_client.Rest5ClientOptions.Builder)
             client._transportOptions().toBuilder();
@@ -431,14 +436,9 @@ public final class ManagedSearch {
         .setRequestConfig(
             org.apache.hc.client5.http.config.RequestConfig.custom()
                 .setConnectionRequestTimeout(
-                    org.apache.hc.core5.util.Timeout.ofMilliseconds(
-                        remainingMillis.applyAsInt(settings.connectTimeout())))
-                .setConnectTimeout(
-                    org.apache.hc.core5.util.Timeout.ofMilliseconds(
-                        remainingMillis.applyAsInt(settings.connectTimeout())))
-                .setResponseTimeout(
-                    org.apache.hc.core5.util.Timeout.ofMilliseconds(
-                        remainingMillis.applyAsInt(settings.readTimeout())))
+                    org.apache.hc.core5.util.Timeout.ofMilliseconds(connectMillis))
+                .setConnectTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(connectMillis))
+                .setResponseTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(readMillis))
                 .setRedirectsEnabled(false)
                 .build());
     return new ElasticsearchAsyncClient(client._transport(), options.build());

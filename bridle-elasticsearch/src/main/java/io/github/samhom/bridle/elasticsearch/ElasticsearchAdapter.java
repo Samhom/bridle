@@ -107,6 +107,7 @@ public final class ElasticsearchAdapter
 
   @Override
   public void warmup(ElasticsearchClient client, Duration timeout) throws Exception {
+    int readiness = readinessMillis(timeout);
     co.elastic.clients.transport.rest5_client.Rest5ClientOptions.Builder options =
         (co.elastic.clients.transport.rest5_client.Rest5ClientOptions.Builder)
             client._transportOptions().toBuilder();
@@ -114,8 +115,8 @@ public final class ElasticsearchAdapter
         .restClientRequestOptionsBuilder()
         .setRequestConfig(
             org.apache.hc.client5.http.config.RequestConfig.custom()
-                .setResponseTimeout(Timeout.ofMilliseconds(readinessMillis(timeout)))
-                .setConnectionRequestTimeout(Timeout.ofMilliseconds(readinessMillis(timeout)))
+                .setResponseTimeout(Timeout.ofMilliseconds(readiness))
+                .setConnectionRequestTimeout(Timeout.ofMilliseconds(readiness))
                 .setRedirectsEnabled(false)
                 .build());
     if (!client.withTransportOptions(options.build()).ping().value())
