@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Reserves delivery capacity before admission; completion never falls back to a native thread. */
@@ -60,12 +59,12 @@ final class CompletionDispatcher {
   }
 
   final class Reservation {
-    private final AtomicBoolean delivered = new AtomicBoolean();
-    private final AtomicBoolean released = new AtomicBoolean();
+    private static final int DELIVERED = 1;
+    private static final int RELEASED = 2;
+    private final AtomicInteger state = new AtomicInteger();
 
     void deliver(Runnable completion) {
-      if (!delivered.compareAndSet(false, true))
-        throw new IllegalStateException("Completion already selected");
+      if (!mark(DELIVERED)) throw new IllegalStateException("Completion already selected");
       // At most capacity reservations exist. Queue capacity alone covers all of them, even
       // while a worker is returning from the finally block that releases its reservation.
       try {
@@ -86,11 +85,20 @@ final class CompletionDispatcher {
     }
 
     void release() {
-      if (!released.compareAndSet(false, true)) return;
+      if (!mark(RELEASED)) return;
       synchronized (CompletionDispatcher.this) {
         reservations--;
         if (closed && reservations == 0) executor.shutdown();
       }
+    }
+
+    private boolean mark(int bit) {
+      int current;
+      do {
+        current = state.get();
+        if ((current & bit) != 0) return false;
+      } while (!state.compareAndSet(current, current | bit));
+      return true;
     }
   }
 
