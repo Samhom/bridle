@@ -167,8 +167,10 @@ public final class ManagedProducer {
   }
 
   private static Message message(Outbound value, RocketMqSettings settings) {
-    Limits.bytes(value.body, settings.maxMessageBytes());
-    Message message = new Message(settings.topic(), value.body.clone());
+    // body() already returns a private copy. The length check uses that same array.
+    byte[] body = value.body();
+    Limits.bytes(body, settings.maxMessageBytes());
+    Message message = new Message(settings.topic(), body);
     message.setKeys(value.businessKey);
     return message;
   }
